@@ -22,9 +22,7 @@ class Settings(BaseSettings):
     thumbnail_download_path: str = "/video/download/thumbnail"
 
     youtube_api_key: str = "youtube_key"
-    youtube_secret_json: str = (
-        "D:\\!Идеи\\PeerTube node\\peer_node_downloader\\client_secret_897175916416-sgf4116lrasbr8qub65tv2v0j4reip6v.apps.googleusercontent.com.json"
-    )
+    youtube_secret_json: str = ""
 
     class Config:
         env_file = ".env"

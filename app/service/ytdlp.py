@@ -10,7 +10,7 @@ from app.config import settings
 from app.db.base import Session
 from app.db.data_table import Video
 from app.db.repository import YoutubeDataRepository
-from app.schema import ChannelInfoSchema
+from app.schema import ChannelInfoSchema, YTFormatSchema
 
 
 class YTDownloader:
@@ -20,7 +20,7 @@ class YTDownloader:
     def update_channels_metadata(self, channels_list: list[str]) -> None:
         for channel_url in channels_list:
             result = subprocess.run(
-                ["yt-dlp", "-J", "--flat-playlist", channel_url],
+                ["yt-dlp", "-J", "--flat-playlist", "--quiet", "--no-warnings", "--no-progress", channel_url],
                 capture_output=True,
                 text=True,
             )
@@ -73,6 +73,38 @@ class YTDownloader:
                 self._repository.update_thumbnail_path(video_id, video.thumbnail_url, thumbnail_path)
             except httpx.HTTPStatusError as e:
                 logger.error(f"HTTP error occurred: {e}")
+
+    def get_video_formats(self, video_id: str) -> list[YTFormatSchema] | None:
+        result = subprocess.run(
+            [
+                "yt-dlp",
+                "-J",
+                "--quiet",
+                "--no-warnings",
+                "--no-progress",
+                f"https://www.youtube.com/watch?v={video_id}",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error(f"Ошибка при выполнении yt-dlp для video_id={video_id}: {result.stderr}")
+            return None
+
+        try:
+            video_data = json.loads(result.stdout)
+            formats_data = video_data.get("formats", [])  # Получаем список форматов
+            formats = []
+            for format_data in formats_data:
+                try:
+                    format_schema = YTFormatSchema(**format_data)  # Создаём объект схемы для каждого формата
+                    formats.append(format_schema)
+                except ValidationError as e:
+                    logger.error(f"Ошибка валидации формата видео: {e}")
+            return formats
+        except json.JSONDecodeError as e:
+            logger.error(f"Не удалось декодировать JSON: {e}")
+            return None
 
     def _construct_video_path(self, video_id: str) -> Path:
         return Path(settings.video_download_path) / f"{video_id}.mp4"

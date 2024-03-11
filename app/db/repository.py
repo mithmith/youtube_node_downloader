@@ -7,8 +7,8 @@ from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from app.db.base import BaseRepository
-from app.db.data_table import Channel, Tag, Thumbnail, Video, VideoTag
-from app.schema import ChannelInfoSchema, ThumbnailSchema, VideoSchema
+from app.db.data_table import Channel, Tag, Thumbnail, Video, VideoTag, YTFormat
+from app.schema import ChannelInfoSchema, ThumbnailSchema, VideoSchema, YTFormatSchema
 
 
 class YoutubeDataRepository(BaseRepository[Channel]):
@@ -224,6 +224,33 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             self.commit()
         else:
             logger.warning(f"Video with ID {video_id} not found.")
+
+    def add_video_format(self, format_data: YTFormatSchema, youtube_video_id: str) -> YTFormat:
+        # Сначала находим видео по его youtube_video_id
+        video: Video = self._session.query(Video).filter_by(video_id=youtube_video_id).first()
+        if not video:
+            logger.error(f"Video with youtube_video_id '{youtube_video_id}' not found.")
+            return None
+
+        # Преобразовываем format_data в словарь для удобства
+        format_dict = format_data.model_dump(exclude_unset=True)
+        # Проверяем, существует ли уже формат с таким format_id для данного видео
+        yt_format: YTFormat = (
+            self._session.query(YTFormat).filter_by(video_id=video.id, format_id=format_dict["format_id"]).first()
+        )
+
+        if yt_format:
+            # Обновляем существующий формат
+            for key, value in format_dict.items():
+                setattr(yt_format, key, value)
+        else:
+            # Создаём новый объект YTFormat и добавляем его в сессию
+            format_dict["video_id"] = video.id  # Присваиваем ID видео
+            new_format = YTFormat(**format_dict)
+            self._session.add(new_format)
+
+        self.commit()
+        return yt_format if yt_format else new_format
 
     def bulk_add_tags(self, tags: list[str]) -> None:
         existing_tags: list[Tag] = self._session.query(Tag).filter(Tag.name.in_(tags)).all()

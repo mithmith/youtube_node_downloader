@@ -59,3 +59,27 @@ class ChannelInfoSchema(BaseModel):
     webpage_url_basename: Optional[str] = None
     webpage_url_domain: Optional[str] = None
     release_year: Optional[int] = None
+
+
+class YTFormatSchema(BaseModel):
+    format_id: str
+    ext: str
+    resolution: str
+    fps: Optional[float] = None
+    audio_channels: Optional[int] = None
+    filesize: Optional[int] = None
+    tbr: Optional[float] = None
+    protocol: Optional[str] = None
+    vcodec: Optional[str] = None
+    acodec: Optional[str] = None
+    asr: Optional[int] = None  # Audio sample rate
+    more_info: Optional[str] = None
+    format_note: Optional[str] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    aspect_ratio: Optional[float] = None
+    dynamic_range: Optional[str] = None
+    language: Optional[str] = None
+    quality: Optional[int] = 0
+    has_drm: Optional[bool] = False
+    filesize_approx: Optional[int] = None  # Приблизительный размер файла
