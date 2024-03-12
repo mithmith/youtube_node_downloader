@@ -3,8 +3,9 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from loguru import logger
-from sqlalchemy import or_
+from sqlalchemy import or_, not_
 from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.orm import aliased
 
 from app.db.base import BaseRepository
 from app.db.data_table import Channel, Tag, Thumbnail, Video, VideoTag, YTFormat
@@ -171,6 +172,22 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             .limit(limit)
             .all()
         )
+
+    def get_video_ids_without_formats(self, limit: int = 50) -> list[str]:
+        # Создаем подзапрос для получения уникальных video_id из таблицы video_formats
+        subquery = self.session.query(YTFormat.video_id).distinct().subquery()
+
+        # Формируем основной запрос, используя LEFT OUTER JOIN и фильтруя результаты так, чтобы в ответе остались только те видео,
+        # для которых нет записей в подзапросе
+        query = self.session.query(Video.video_id).outerjoin(
+            subquery, Video.id == subquery.c.video_id
+        ).filter(subquery.c.video_id == None).limit(limit)
+
+        # Выполняем запрос и возвращаем результаты
+        video_ids = query.all()
+        
+        # Преобразуем результат в список строк
+        return [video_id[0] for video_id in video_ids]
 
     def get_video(self, youtube_video_id: str) -> Video | None:
         video: Video = self.session.query(Video).filter_by(video_id=youtube_video_id).first()

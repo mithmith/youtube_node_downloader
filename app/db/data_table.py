@@ -123,15 +123,15 @@ class YTFormat(Base, table=True):
     resolution: Optional[str] = Field(default=None)  # Может быть None для аудио форматов
     fps: Optional[float] = Field(default=None)  # Может быть None и может быть дробным
     audio_channels: Optional[int] = Field(
-        default=None, alias="audio_channels"
+        default=None, alias="channels"
     )  # Изменено для соответствия ответу yt-dlp
     filesize: Optional[int] = Field(default=None, nullable=True)  # Размер файла в байтах
     tbr: Optional[float] = Field(default=None)  # Total bitrate может быть дробным
-    proto: Optional[str] = Field(default=None)  # Протокол
+    protocol: Optional[str] = Field(default=None)  # Протокол
     vcodec: Optional[str] = Field(default=None)  # Видео кодек
     acodec: Optional[str] = Field(default=None)  # Аудио кодек
     asr: Optional[int] = Field(default=None)  # Audio sample rate может быть None
-    more_info: Optional[str] = Field(default=None)  # Дополнительная информация
+    format: Optional[str] = Field(default=None)  # Дополнительная информация
     format_note: Optional[str] = Field(default=None)  # Примечание к формату
     width: Optional[int] = Field(default=None)  # Ширина видео
     height: Optional[int] = Field(default=None)  # Высота видео

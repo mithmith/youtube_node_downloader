@@ -73,7 +73,7 @@ class YTFormatSchema(BaseModel):
     vcodec: Optional[str] = None
     acodec: Optional[str] = None
     asr: Optional[int] = None  # Audio sample rate
-    more_info: Optional[str] = None
+    format: Optional[str] = None
     format_note: Optional[str] = None
     width: Optional[int] = None
     height: Optional[int] = None

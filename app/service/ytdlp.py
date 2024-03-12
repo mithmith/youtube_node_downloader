@@ -74,6 +74,14 @@ class YTDownloader:
             except httpx.HTTPStatusError as e:
                 logger.error(f"HTTP error occurred: {e}")
 
+    def update_video_formats(self) -> None:
+        video_ids = self._repository.get_video_ids_without_formats(limit=50)
+        logger.debug(len(video_ids))
+        for v_id in video_ids:
+            formats = self.get_video_formats(v_id)
+            for format_data in formats:
+                self._repository.add_video_format(format_data, v_id)
+
     def get_video_formats(self, video_id: str) -> list[YTFormatSchema] | None:
         result = subprocess.run(
             [
