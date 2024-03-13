@@ -15,7 +15,7 @@ class VideoTag(Base, table=True):
     tag_id: int = Field(sa_column=Column(Integer, ForeignKey("tags.id"), primary_key=True))
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Channel(Base, table=True):
@@ -28,6 +28,10 @@ class Channel(Base, table=True):
     description: Optional[str] = Field(default=None)
     channel_url: str = Field(nullable=False, unique=True)
     channel_follower_count: Optional[int] = Field(default=None)
+    viewCount: Optional[int] = Field(default=None)
+    videoCount: Optional[int] = Field(default=None)
+    published_at: datetime = Field(nullable=False)
+    country: Optional[str] = Field(default="")
     tags: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
     thumbnails: List["Thumbnail"] = Relationship(back_populates="channel")
     banner_path: Optional[str] = Field(default=None)
@@ -35,7 +39,7 @@ class Channel(Base, table=True):
     videos: List["Video"] = Relationship(back_populates="channel")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Video(Base, table=True):
@@ -72,7 +76,7 @@ class Video(Base, table=True):
 
     class Config:
         arbitrary_types_allowed = True  # Разрешаем использование произвольных типов
-        orm_mode = True
+        from_attributes = True
 
 
 class Tag(Base, table=True):
@@ -83,7 +87,7 @@ class Tag(Base, table=True):
     videos: List[Video] = Relationship(back_populates="tags", link_model=VideoTag)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Thumbnail(Base, table=True):
@@ -111,7 +115,7 @@ class Thumbnail(Base, table=True):
     __table_args__ = (UniqueConstraint("url", name="uix_thumbnail_url"),)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class YTFormat(Base, table=True):
@@ -122,9 +126,7 @@ class YTFormat(Base, table=True):
     ext: str = Field(nullable=False)  # Файл extension
     resolution: Optional[str] = Field(default=None)  # Может быть None для аудио форматов
     fps: Optional[float] = Field(default=None)  # Может быть None и может быть дробным
-    audio_channels: Optional[int] = Field(
-        default=None, alias="channels"
-    )  # Изменено для соответствия ответу yt-dlp
+    audio_channels: Optional[int] = Field(default=None, alias="channels")  # Изменено для соответствия ответу yt-dlp
     filesize: Optional[int] = Field(default=None, nullable=True)  # Размер файла в байтах
     tbr: Optional[float] = Field(default=None)  # Total bitrate может быть дробным
     protocol: Optional[str] = Field(default=None)  # Протокол
@@ -149,4 +151,4 @@ class YTFormat(Base, table=True):
     video: Optional["Video"] = Relationship(back_populates="formats")
 
     class Config:
-        orm_mode = True
+        from_attributes = True

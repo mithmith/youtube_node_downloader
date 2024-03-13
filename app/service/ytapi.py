@@ -1,11 +1,10 @@
 import os
 import sys
-from contextlib import suppress
 from datetime import datetime
 
 import googleapiclient.discovery
-import googleapiclient.errors
 import httplib2
+from googleapiclient.errors import HttpError
 from loguru import logger
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
@@ -14,6 +13,7 @@ from oauth2client.tools import argparser, run_flow
 from app.config import settings
 from app.db.base import Session
 from app.db.repository import YoutubeDataRepository
+from app.schema import ChannelAPIInfoSchema
 
 
 class YTApiService:
@@ -70,7 +70,7 @@ class YTApiService:
 
     def update_missing_video_info(self):
         videos_without_date = self._repository.get_videos_without_upload_date()
-        logger.debug(len(videos_without_date))
+        logger.debug(f"videos_without_date: {len(videos_without_date)}")
         while videos_without_date:
             video_ids = [
                 video.video_id for video in videos_without_date if video.like_count != -1
@@ -82,3 +82,38 @@ class YTApiService:
             # Fetch next batch of videos, уже с учетом маркера неудачи
             videos_without_date = self._repository.get_videos_without_upload_date()
         self._repository.reset_all_invalid_videos()
+
+    def get_channel_info(self, channel_ids: list[str]) -> list[ChannelAPIInfoSchema]:
+        # Disable OAuthlib's HTTPS verification when running locally.
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+        # Get credentials and create an API client
+        flow = flow_from_clientsecrets(self.client_secrets_file, scope=self.scopes)
+        storage = Storage("%s-oauth2.json" % sys.argv[0])
+        credentials = storage.get()
+        if credentials is None or credentials.invalid:
+            flags = argparser.parse_args()
+            credentials = run_flow(flow, storage, flags)
+
+        youtube = googleapiclient.discovery.build(self.api_service_name, self.api_version, credentials=credentials)
+        channels_info: list[ChannelAPIInfoSchema] = []
+
+        try:
+            request = youtube.channels().list(
+                part="contentDetails,contentOwnerDetails,id,snippet,statistics,status,topicDetails",
+                id=",".join(channel_ids),
+            )
+            response = request.execute()
+            # Преобразуем ответ в объект ChannelAPIInfoSchema
+            if "items" in response:
+                for item in response["items"]:
+                    channels_info.append(ChannelAPIInfoSchema.from_api_response(item))
+
+            return channels_info
+        except HttpError as e:
+            logger.error(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
+        except KeyError:
+            logger.error("The response from the API did not contain the expected data.")
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}")
+        return None

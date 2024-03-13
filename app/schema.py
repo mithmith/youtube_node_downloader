@@ -1,6 +1,7 @@
-from typing import Optional
+from datetime import datetime
+from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ThumbnailSchema(BaseModel):
@@ -59,6 +60,60 @@ class ChannelInfoSchema(BaseModel):
     webpage_url_basename: Optional[str] = None
     webpage_url_domain: Optional[str] = None
     release_year: Optional[int] = None
+
+
+class ChannelAPIInfoSchema(BaseModel):
+    id: str
+    title: str
+    description: Optional[str]
+    customUrl: Optional[str]
+    publishedAt: datetime
+    country: Optional[str]
+    viewCount: Optional[int]
+    subscriberCount: Optional[int]
+    hiddenSubscriberCount: Optional[bool]
+    videoCount: Optional[int]
+    topicIds: Optional[List[str]]
+    topicCategories: Optional[List[str]]
+    privacyStatus: Optional[str]
+    isLinked: Optional[bool]
+    longUploadsStatus: Optional[str]
+    madeForKids: Optional[bool]
+    selfDeclaredMadeForKids: Optional[bool]
+
+    @classmethod
+    def from_api_response(cls, data: dict):
+        snippet = data.get("snippet", {})
+        statistics = data.get("statistics", {})
+        topicDetails = data.get("topicDetails", {})
+        status = data.get("status", {})
+
+        # Преобразование строки в datetime
+        published_at = (
+            datetime.fromisoformat(snippet.get("publishedAt").replace("Z", "+00:00"))
+            if "publishedAt" in snippet
+            else None
+        )
+
+        return cls(
+            id=data["id"],
+            title=snippet.get("title"),
+            description=snippet.get("description"),
+            customUrl=snippet.get("customUrl"),
+            publishedAt=published_at,
+            country=snippet.get("country"),
+            viewCount=int(statistics.get("viewCount", 0)) if statistics.get("viewCount") else None,
+            subscriberCount=int(statistics.get("subscriberCount", 0)) if statistics.get("subscriberCount") else None,
+            hiddenSubscriberCount=statistics.get("hiddenSubscriberCount"),
+            videoCount=int(statistics.get("videoCount", 0)) if statistics.get("videoCount") else None,
+            topicIds=topicDetails.get("topicIds"),
+            topicCategories=topicDetails.get("topicCategories"),
+            privacyStatus=status.get("privacyStatus"),
+            isLinked=status.get("isLinked"),
+            longUploadsStatus=status.get("longUploadsStatus"),
+            madeForKids=status.get("madeForKids"),
+            selfDeclaredMadeForKids=status.get("selfDeclaredMadeForKids"),
+        )
 
 
 class YTFormatSchema(BaseModel):
