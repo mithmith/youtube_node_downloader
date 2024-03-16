@@ -10,49 +10,57 @@ from app.config import settings
 from app.db.base import Session
 from app.db.data_table import Video
 from app.db.repository import YoutubeDataRepository
-from app.schema import ChannelInfoSchema, YTFormatSchema
+from app.schema import ChannelInfoSchema, VideoSchema, YTFormatSchema
 
 
 class YTDownloader:
     def __init__(self):
         self._repository = YoutubeDataRepository(session=Session())
 
+    def get_channel_list(self, channel_url: str) -> tuple[list[VideoSchema], str]:
+        result = subprocess.run(
+            ["yt-dlp", "-J", "--flat-playlist", "--quiet", "--no-warnings", "--no-progress", channel_url],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error(f"Ошибка при выполнении yt-dlp для {channel_url}: {result.stderr}")
+            return []
+
+        video_list: list[VideoSchema] = []
+        try:
+            data = json.loads(result.stdout)
+            # Проверяем, является ли первый элемент в entries плейлистом
+            if data.get("entries") and data["entries"][0].get("_type") == "playlist":
+                # Обрабатываем каждый плейлист отдельно
+                for playlist_data in data["entries"]:
+                    videos, channel_id = self.process_playlist(playlist_data)
+                    video_list.extend(videos)
+            else:
+                # Обрабатываем как одиночный плейлист
+                video_list, channel_id = self.process_playlist(data)
+        except json.JSONDecodeError:
+            logger.error(f"Не удалось декодировать JSON из вывода yt-dlp для {channel_url}")
+            return []
+        except KeyError:
+            logger.error(f"Отсутствует ключевая информация в данных от {channel_url}")
+            return []
+        return video_list, channel_id
+
     def update_channels_metadata(self, channels_list: list[str]) -> None:
         for channel_url in channels_list:
-            result = subprocess.run(
-                ["yt-dlp", "-J", "--flat-playlist", "--quiet", "--no-warnings", "--no-progress", channel_url],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                logger.error(f"Ошибка при выполнении yt-dlp для {channel_url}: {result.stderr}")
-                continue
+            videos, channel_id = self.get_channel_list(channel_url)
+            for v in videos:
+                self._repository.add_video_metadata(v, channel_id)
 
-            try:
-                data = json.loads(result.stdout)
-                # Проверяем, является ли первый элемент в entries плейлистом
-                if data.get("entries") and data["entries"][0].get("_type") == "playlist":
-                    # Обрабатываем каждый плейлист отдельно
-                    for playlist_data in data["entries"]:
-                        self.process_playlist(playlist_data)
-                else:
-                    # Обрабатываем как одиночный плейлист
-                    self.process_playlist(data)
-            except json.JSONDecodeError:
-                logger.error(f"Не удалось декодировать JSON из вывода yt-dlp для {channel_url}")
-                continue
-            except KeyError:
-                logger.error(f"Отсутствует ключевая информация в данных от {channel_url}")
-                continue
-
-    def process_playlist(self, playlist_data: dict):
+    def process_playlist(self, playlist_data: dict) -> tuple[list[VideoSchema], str]:
         try:
             channel_data = ChannelInfoSchema(**playlist_data)
             self._repository.add_or_update_channel(channel_data)
-            for item in channel_data.entries:
-                self._repository.add_video_metadata(item, channel_data.channel_id)
+            return channel_data.entries, channel_data.channel_id
         except ValidationError as e:
             logger.error(f"Ошибка валидации данных: {e}")
+            return []
 
     def download_video(self, video_id: str, format: str = "bv+ba/b") -> None:
         video: Video = self._repository.get_video(video_id)

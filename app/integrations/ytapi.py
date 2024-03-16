@@ -12,12 +12,12 @@ from oauth2client.tools import argparser, run_flow
 
 from app.config import settings
 from app.db.base import Session
-from app.db.data_table import Channel
+from app.db.data_table import Channel, Video
 from app.db.repository import YoutubeDataRepository
 from app.schema import ChannelAPIInfoSchema
 
 
-class YTApiService:
+class YTApiClient:
     def __init__(self):
         self.scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
         self.api_service_name = "youtube"
@@ -69,19 +69,20 @@ class YTApiService:
                     self._repository.set_video_as_invalid(video_id)
                     logger.error(f"Failed to update video details for video ID {video_id}. Error: {e}")
 
-    def update_missing_video_info(self):
-        videos_without_date = self._repository.get_videos_without_upload_date()
-        logger.debug(f"videos_without_date: {len(videos_without_date)}")
-        while videos_without_date:
+    def update_missing_video_info(self, videos_list: list[Video] = []):
+        if not videos_list:
+            videos_list = self._repository.get_videos_without_upload_date()
+            logger.debug(f"videos_without_date: {len(videos_list)}")
+        while videos_list:
             video_ids = [
-                video.video_id for video in videos_without_date if video.like_count != -1
+                video.video_id for video in videos_list if video.like_count != -1
             ]  # Пропускаем видео с маркером неудачи
 
             # Предполагаем, что update_video_info обновляет данные успешно или устанавливает like_count = -1 при неудаче
             self.update_video_info(video_ids)
 
             # Fetch next batch of videos, уже с учетом маркера неудачи
-            videos_without_date = self._repository.get_videos_without_upload_date()
+            videos_list = self._repository.get_videos_without_upload_date()
         self._repository.reset_all_invalid_videos()
 
     def get_channel_info(self, channel_ids: list[str]) -> list[ChannelAPIInfoSchema]:

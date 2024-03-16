@@ -174,7 +174,9 @@ class YoutubeDataRepository(BaseRepository[Channel]):
 
     def update_channel_details(self, channel_info: ChannelAPIInfoSchema):
         channel: Channel = self._session.query(Channel).filter_by(channel_id=channel_info.id).first()
-        channel_dict = channel_info.model_dump(exclude_unset=True)  # Получаем словарь значений, исключая неустановленные
+        channel_dict = channel_info.model_dump(
+            exclude_unset=True
+        )  # Получаем словарь значений, исключая неустановленные
 
         if channel:
             # Обновляем существующий объект Channel, если он найден

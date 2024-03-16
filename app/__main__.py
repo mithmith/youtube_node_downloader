@@ -1,8 +1,8 @@
 from loguru import logger
 
 from app.const import channels_list
-from app.service.ytapi import YTApiService
-from app.service.ytdlp import YTDownloader
+from app.integrations.ytapi import YTApiClient
+from app.integrations.ytdlp import YTDownloader
 
 # # 1
 # downloader = YTDownloader()
