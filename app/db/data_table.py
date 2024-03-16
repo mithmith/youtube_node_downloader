@@ -6,10 +6,12 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlmodel import Field, Relationship
 
 from app.db.base import Base
+from app.config import settings
 
 
 class VideoTag(Base, table=True):
     __tablename__ = "videotag"
+    __table_args__ = {'schema': settings.db_schema}
 
     video_id: UUID = Field(sa_column=Column(UUID(as_uuid=True), ForeignKey("videos.id"), primary_key=True))
     tag_id: int = Field(sa_column=Column(Integer, ForeignKey("tags.id"), primary_key=True))
@@ -20,6 +22,7 @@ class VideoTag(Base, table=True):
 
 class Channel(Base, table=True):
     __tablename__ = "channels"
+    __table_args__ = {'schema': settings.db_schema}
 
     channel_id: str = Field(nullable=False, primary_key=True)
     id: str = Field(nullable=False, unique=True)
@@ -44,6 +47,7 @@ class Channel(Base, table=True):
 
 class Video(Base, table=True):
     __tablename__ = "videos"
+    __table_args__ = {'schema': settings.db_schema}
 
     id: Optional[UUID] = Field(
         sa_column=Column(
@@ -81,6 +85,7 @@ class Video(Base, table=True):
 
 class Tag(Base, table=True):
     __tablename__ = "tags"
+    __table_args__ = {'schema': settings.db_schema}
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(nullable=False, unique=True)
@@ -92,6 +97,8 @@ class Tag(Base, table=True):
 
 class Thumbnail(Base, table=True):
     __tablename__ = "thumbnails"
+    __table_args__ = {'schema': settings.db_schema}
+    __table_args__ = (UniqueConstraint("url", name="uix_thumbnail_url"),)
 
     id: Optional[UUID] = Field(
         sa_column=Column(
@@ -112,14 +119,13 @@ class Thumbnail(Base, table=True):
     video: Video = Relationship(back_populates="thumbnails")
     channel: Channel = Relationship(back_populates="thumbnails")
 
-    __table_args__ = (UniqueConstraint("url", name="uix_thumbnail_url"),)
-
     class Config:
         from_attributes = True
 
 
 class YTFormat(Base, table=True):
     __tablename__ = "video_formats"
+    __table_args__ = {'schema': settings.db_schema}
 
     id: Optional[int] = Field(default=None, primary_key=True)
     format_id: str = Field(nullable=False)  # Format ID from yt-dlp response

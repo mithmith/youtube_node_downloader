@@ -3,13 +3,12 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from loguru import logger
-from sqlalchemy import not_, or_
-from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.orm import aliased
+from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
 
 from app.db.base import BaseRepository
 from app.db.data_table import Channel, Tag, Thumbnail, Video, VideoTag, YTFormat
-from app.schema import ChannelInfoSchema, ThumbnailSchema, VideoSchema, YTFormatSchema
+from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, ThumbnailSchema, VideoSchema, YTFormatSchema
 
 
 class YoutubeDataRepository(BaseRepository[Channel]):
@@ -163,6 +162,31 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             self.add_thumbnail(thumbnail_schema, channel_id=channel_data.channel_id)
         self.commit()
         return channel
+
+    def get_channels(self, limit: int = 50, page: int = 0):
+        try:
+            return (
+                self.session.query(Channel).order_by(Channel.published_at.asc()).limit(limit).offset(page * limit).all()
+            )
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении каналов: {e}")
+            return []
+
+    def update_channel_details(self, channel_info: ChannelAPIInfoSchema):
+        channel: Channel = self._session.query(Channel).filter_by(channel_id=channel_info.id).first()
+        channel_dict = channel_info.model_dump(exclude_unset=True)  # Получаем словарь значений, исключая неустановленные
+
+        if channel:
+            # Обновляем существующий объект Channel, если он найден
+            for key, value in channel_dict.items():
+                if hasattr(channel, key):
+                    setattr(channel, key, value)  # Обновляем атрибут, если он существует
+        else:
+            # Если канал не найден, создаем новый с использованием значений из channel_info
+            new_channel_data = {key: value for key, value in channel_dict.items() if hasattr(Channel, key)}
+            new_channel = Channel(**new_channel_data)
+            self._session.add(new_channel)
+        self.commit()
 
     def get_videos_without_upload_date(self, limit: int = 30) -> list[Video]:
         return (

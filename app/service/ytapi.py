@@ -12,6 +12,7 @@ from oauth2client.tools import argparser, run_flow
 
 from app.config import settings
 from app.db.base import Session
+from app.db.data_table import Channel
 from app.db.repository import YoutubeDataRepository
 from app.schema import ChannelAPIInfoSchema
 
@@ -117,3 +118,21 @@ class YTApiService:
         except Exception as e:
             logger.error(f"Unexpected error occurred: {e}")
         return None
+
+    def update_channels_info(self):
+        channels_list: list[Channel] = self._repository.get_channels(limit=10)
+        # logger.debug(channels_list)
+        page = 1
+        while channels_list:
+            logger.debug(f"Updating info for {len(channels_list)} channels.")
+            try:
+                channel_ids = [ch.channel_id for ch in channels_list]
+                channels = self.get_channel_info(channel_ids)
+                for channel_api_info in channels:
+                    self._repository.update_channel_details(channel_api_info)
+            except Exception as e:
+                logger.error("Failed to update channels info!")
+                logger.error(e)
+            # Загружаем следующую порцию каналов
+            channels_list: list[Channel] = self._repository.get_channels(limit=10, page=page)
+            page += 1

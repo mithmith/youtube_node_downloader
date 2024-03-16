@@ -4,8 +4,7 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.config import settings
-from app.db.base import Base
-from app.db.data_table import Channel, Tag, Thumbnail, Video, VideoTag, YTFormat
+from app.db.data_table import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -45,7 +44,9 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        version_table_schema=settings.db_schema,
         literal_binds=True,
+        version_table="alembic_version",
         dialect_opts={"paramstyle": "named"},
     )
 

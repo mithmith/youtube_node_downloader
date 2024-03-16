@@ -87,5 +87,6 @@ channels_list = {
         "https://www.youtube.com/@MarEnLenSt",
         "https://www.youtube.com/@krasnoetv24",
         "https://www.youtube.com/@vladimir.metelkin",
+        "https://www.youtube.com/@Red_Yurt",
     ]
 }

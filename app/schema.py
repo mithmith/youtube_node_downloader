@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from dateutil import parser
+from pydantic import BaseModel
 
 
 class ThumbnailSchema(BaseModel):
@@ -67,7 +68,7 @@ class ChannelAPIInfoSchema(BaseModel):
     title: str
     description: Optional[str]
     customUrl: Optional[str]
-    publishedAt: datetime
+    published_at: datetime
     country: Optional[str]
     viewCount: Optional[int]
     subscriberCount: Optional[int]
@@ -89,18 +90,14 @@ class ChannelAPIInfoSchema(BaseModel):
         status = data.get("status", {})
 
         # Преобразование строки в datetime
-        published_at = (
-            datetime.fromisoformat(snippet.get("publishedAt").replace("Z", "+00:00"))
-            if "publishedAt" in snippet
-            else None
-        )
+        published_at = parser.isoparse(snippet.get("publishedAt")) if "publishedAt" in snippet else None
 
         return cls(
             id=data["id"],
             title=snippet.get("title"),
             description=snippet.get("description"),
             customUrl=snippet.get("customUrl"),
-            publishedAt=published_at,
+            published_at=published_at,
             country=snippet.get("country"),
             viewCount=int(statistics.get("viewCount", 0)) if statistics.get("viewCount") else None,
             subscriberCount=int(statistics.get("subscriberCount", 0)) if statistics.get("subscriberCount") else None,
