@@ -1,43 +1,46 @@
 # Youtube Parser Downloader
 
-## Обзор
-Youtube Parser Downloader — это проект с открытым исходным кодом, предназначенный для сбора статистической информации о видео на YouTube, мониторинга каналов, скачивания видео, аудио, субтитров и миниатюр, а также для реализации ряда дополнительных функций, таких как локализация контента и его редактирование. Этот инструмент предназначен для исследователей, разработчиков и всех, кто заинтересован в анализе контента YouTube и его дальнейшем использовании.
+## Overview
+Youtube Parser Downloader is an open-source project designed for collecting statistical information about YouTube videos, channel monitoring, downloading videos, audio, subtitles, and thumbnails, as well as implementing a number of additional features such as content localization and editing. This tool is intended for researchers, developers, and anyone interested in analyzing YouTube content and its further use.
 
-## Возможности
-- Парсинг информации о каналах и видео через `yt-dlp` и YouTube API.
-- Мониторинг каналов и получение новых видео.
-- Скачивание видео, аудио, субтитров и миниатюр.
-- Редактирование видео, включая объединение аудио дорожек и увеличение разрешения.
-- Локализация контента, включая перевод описаний и субтитров.
-- Создание субтитров и краткого пересказа видео.
-- Интеграция с Telegram для отправки уведомлений о новых и популярных видео.
-- Зеркальное размещение видео на децентрализованном хостинге Peertube.
+## README.md
+- English [README.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.md)
+- Русский [README.ru.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.ru.md)
 
-## Как помочь проекту
-Мы рады любой помощи и предлагаем широкий спектр задач для вклада в проект, начиная от программирования и заканчивая документацией. Если вы хотите помочь, взгляните на наш [список задач](https://github.com/mithmith/peer_node_downloader/blob/main/TODO.md) и выберите то, что вам по душе. Мы ценим каждый вклад!
+## Features
+- Parsing information about channels and videos through `yt-dlp` and YouTube API.
+- Monitoring channels and obtaining new videos.
+- Downloading video, audio, subtitles, and thumbnails.
+- Video editing, including merging audio tracks and increasing resolution.
+- Content localization, including translating descriptions and subtitles.
+- Creating subtitles and brief video summaries.
+- Integration with Telegram for sending notifications about new and popular videos.
+- Mirroring videos on the decentralized hosting Peertube.
 
-### Список задач
-- Сбор информации о каналах и видео.
-- Мониторинг каналов и статистика.
-- Скачивание контента.
-- Редактирование и локализация видео.
-- Интеграция с внешними сервисами, такими как Telegram и Peertube.
+## How to Help the Project
+We welcome any help and offer a wide range of tasks for contribution to the project, from programming to documentation. If you want to help, take a look at our [task list](https://github.com/mithmith/peer_node_downloader/blob/main/TODO.md) and choose what you like. We appreciate every contribution!
 
-### Присоединяйтесь к разработке
-Для начала работы с проектом, пожалуйста, ознакомьтесь с нашими руководствами по участию и кодексом поведения. Мы стремимся создать приветливое и продуктивное сообщество.
+## Task List
+- Gathering information about channels and videos.
+- Channel monitoring and statistics.
+- Content downloading.
+- Video editing and localization.
+- Integration with external services such as Telegram and Peertube.
 
-## Контакты
-Если у вас есть вопросы или предложения, не стесняйтесь обращаться к нам через [создание issue](https://github.com/mithmith/peer_node_downloader/issues) в репозитории проекта.
+## Join the Development
+To start working with the project, please familiarize yourself with our participation guides and code of conduct. We aim to create a welcoming and productive community.
 
-## Используемые библиотеки
-В проекте используется Youtube API:
+## Contact
+If you have any questions or suggestions, feel free to contact us through [creating an issue](https://github.com/mithmith/peer_node_downloader/issues) in the project repository.
+
+## Used Libraries
+The project uses the YouTube API:
 https://developers.google.com/youtube/v3/quickstart/python
 
 ```
 pip install google-api-python-client==2.121.0
 pip install google-auth-oauthlib==1.2.0
 pip install google-auth-httplib2
-pip install sqlalchemy==2.0.28 sqlmodel==0.0.16
 ```
-А также проект `yt-dlp`:
+And also the project `yt-dlp`:
 https://github.com/yt-dlp/yt-dlp

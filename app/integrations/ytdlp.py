@@ -34,17 +34,30 @@ class YTDownloader:
             if data.get("entries") and data["entries"][0].get("_type") == "playlist":
                 # Обрабатываем каждый плейлист отдельно
                 for playlist_data in data["entries"]:
-                    videos, channel_id = self.process_playlist(playlist_data)
-                    video_list.extend(videos)
+                    try:
+                        channel_data = ChannelInfoSchema(**playlist_data)
+                        self._repository.add_or_update_channel(channel_data)
+                    except Exception as e:
+                        logger.error("Ошибка валидации данных от yt-dlp:")
+                        logger.error(e)
+                    channel_id = channel_data.channel_id
+                    video_list.extend(channel_data.entries)
             else:
                 # Обрабатываем как одиночный плейлист
-                video_list, channel_id = self.process_playlist(data)
+                try:
+                    channel_data = ChannelInfoSchema(**playlist_data)
+                    self._repository.add_or_update_channel(channel_data)
+                except Exception as e:
+                    logger.error("Ошибка валидации данных от yt-dlp:")
+                    logger.error(e)
+                channel_id = channel_data.channel_id
+                video_list = channel_data.entries
         except json.JSONDecodeError:
             logger.error(f"Не удалось декодировать JSON из вывода yt-dlp для {channel_url}")
-            return []
+            return [], ""
         except KeyError:
             logger.error(f"Отсутствует ключевая информация в данных от {channel_url}")
-            return []
+            return [], ""
         return video_list, channel_id
 
     def update_channels_metadata(self, channels_list: list[str]) -> None:
@@ -52,15 +65,6 @@ class YTDownloader:
             videos, channel_id = self.get_channel_list(channel_url)
             for v in videos:
                 self._repository.add_video_metadata(v, channel_id)
-
-    def process_playlist(self, playlist_data: dict) -> tuple[list[VideoSchema], str]:
-        try:
-            channel_data = ChannelInfoSchema(**playlist_data)
-            self._repository.add_or_update_channel(channel_data)
-            return channel_data.entries, channel_data.channel_id
-        except ValidationError as e:
-            logger.error(f"Ошибка валидации данных: {e}")
-            return []
 
     def download_video(self, video_id: str, format: str = "bv+ba/b") -> None:
         video: Video = self._repository.get_video(video_id)
@@ -121,6 +125,9 @@ class YTDownloader:
         except json.JSONDecodeError as e:
             logger.error(f"Не удалось декодировать JSON: {e}")
             return None
+
+    def video_exist(self, youtube_video_id: str) -> bool:
+        return bool(self._repository.get_video(youtube_video_id))
 
     def _construct_video_path(self, video_id: str) -> Path:
         return Path(settings.video_download_path) / f"{video_id}.mp4"

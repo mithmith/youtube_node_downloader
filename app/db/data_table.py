@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import ARRAY, Column, ForeignKey, Integer, String, UniqueConstraint, text, DateTime
+from sqlalchemy import ARRAY, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlmodel import Field, Relationship
 
@@ -51,13 +51,14 @@ class ChannelHistory(Base, table=True):
     __table_args__ = {"schema": settings.db_schema}
 
     id: int = Field(default=None, primary_key=True)
-    channel_id: str = Field(sa_column=Column(String, ForeignKey('channels.channel_id')))
+    channel_id: str = Field(sa_column=Column(String, ForeignKey("channels.channel_id")))
     follower_count: int = Field(sa_column=Column(Integer))
     view_count: int = Field(sa_column=Column(Integer))
     video_count: int = Field(sa_column=Column(Integer))
-    recorded_at: datetime = Field(sa_column=Column(DateTime, default=datetime.now().replace(milliseconds=0)))
+    recorded_at: datetime = Field(sa_column=Column(DateTime, default=datetime.now().replace(microsecond=0)))
 
-    channel: 'Channel' = Relationship(back_populates="history")
+    channel: "Channel" = Relationship(back_populates="history")
+
 
 class Video(Base, table=True):
     __tablename__ = "videos"
@@ -83,7 +84,7 @@ class Video(Base, table=True):
     thumbnails: List["Thumbnail"] = Relationship(back_populates="video")
     formats: List["YTFormat"] = Relationship(back_populates="video")
     tags: List["Tag"] = Relationship(back_populates="videos", link_model=VideoTag)
-    history: List['VideoHistory'] = Relationship(back_populates="video")
+    history: List["VideoHistory"] = Relationship(back_populates="video")
 
     @property
     def thumbnail_url(self) -> str:
@@ -97,6 +98,7 @@ class Video(Base, table=True):
         arbitrary_types_allowed = True  # Разрешаем использование произвольных типов
         from_attributes = True
 
+
 class VideoHistory(Base, table=True):
     __tablename__ = "video_history"
     __table_args__ = {"schema": settings.db_schema}
@@ -105,9 +107,10 @@ class VideoHistory(Base, table=True):
     video_id: UUID = Field(sa_column=Column(UUID(as_uuid=True), ForeignKey("videos.id")))
     view_count: int = Field(default=0, nullable=True)
     like_count: int = Field(default=0, nullable=True)
-    recorded_at: datetime = Field(default=datetime.now().replace(milliseconds=0))
+    recorded_at: datetime = Field(default=datetime.now().replace(microsecond=0))
 
-    video: 'Video' = Relationship(back_populates="history")
+    video: "Video" = Relationship(back_populates="history")
+
 
 class Tag(Base, table=True):
     __tablename__ = "tags"

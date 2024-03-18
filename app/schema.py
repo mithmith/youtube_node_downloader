@@ -17,7 +17,7 @@ class ThumbnailSchema(BaseModel):
 class VideoSchema(BaseModel):
     _type: str
     ie_key: Optional[str] = ""
-    id: str
+    id: str  # youtube video id
     url: Optional[str] = None
     title: str
     tags: list[str] = []
