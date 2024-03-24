@@ -25,8 +25,14 @@ class Channel(Base, table=True):
     __table_args__ = {"schema": settings.db_schema}
 
     channel_id: str = Field(nullable=False, primary_key=True)
-    id: str = Field(nullable=False, unique=True)
-    channel: str = Field(nullable=False)
+    id: Optional[UUID] = Field(
+        sa_column=Column(
+            UUID(as_uuid=True),
+            unique=True,
+            server_default=text("gen_random_uuid()"),
+        )
+    )
+    customUrl: Optional[str] = Field(nullable=True)
     title: Optional[str] = Field(default=None)
     description: Optional[str] = Field(default=None)
     channel_url: str = Field(nullable=False, unique=True)
@@ -79,7 +85,9 @@ class Video(Base, table=True):
     duration: int = Field(nullable=False)
     view_count: Optional[int] = Field(default=None)
     like_count: Optional[int] = Field(default=0)
+    comment_count: int = Field(default=0, nullable=True)
     upload_date: Optional[datetime] = Field(default=None)
+    defaultAudioLanguage: Optional[str] = Field(default=None)
     channel: Channel = Relationship(back_populates="videos")
     thumbnails: List["Thumbnail"] = Relationship(back_populates="video")
     formats: List["YTFormat"] = Relationship(back_populates="video")
@@ -104,9 +112,10 @@ class VideoHistory(Base, table=True):
     __table_args__ = {"schema": settings.db_schema}
 
     id: int = Field(default=None, primary_key=True)
-    video_id: UUID = Field(sa_column=Column(UUID(as_uuid=True), ForeignKey("videos.id")))
+    video_id: UUID = Field(sa_column=Column(UUID(as_uuid=True), ForeignKey("videos.id"), nullable=False))
     view_count: int = Field(default=0, nullable=True)
     like_count: int = Field(default=0, nullable=True)
+    comment_count: int = Field(default=0, nullable=True)
     recorded_at: datetime = Field(default=datetime.now().replace(microsecond=0))
 
     video: "Video" = Relationship(back_populates="history")

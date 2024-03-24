@@ -15,7 +15,7 @@ class YTMonitorService:
         new_videos: list[Video] = []
         for channel_url in channels_list:
             # Получаем список видео и id канала
-            channel_videos, channel_id = self._yt_dlp_client.get_channel_list(channel_url)
+            channel_videos, channel_id = self._yt_dlp_client.get_channelvideo_list(channel_url)
             for video_schema in channel_videos:
                 if not self._yt_dlp_client.video_exist(video_schema.id):
                     # Видео новое, получаем дополнительную информацию с YouTube Data API

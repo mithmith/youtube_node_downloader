@@ -25,11 +25,13 @@ class VideoSchema(BaseModel):
     duration: Optional[int] = None
     thumbnails: list[ThumbnailSchema] = []
     view_count: Optional[int] = None
+    commentCount: Optional[int] = None
     timestamp: Optional[int] = None
     release_timestamp: Optional[int] = None
     availability: Optional[str] = None
     live_status: Optional[str] = None
     channel_is_verified: Optional[bool] = None
+    defaultAudioLanguage: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True  # Разрешаем использование произвольных типов

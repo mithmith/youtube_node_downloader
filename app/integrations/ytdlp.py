@@ -15,9 +15,35 @@ from app.schema import ChannelInfoSchema, VideoSchema, YTFormatSchema
 
 class YTDownloader:
     def __init__(self):
+        self._channel_data = {}
         self._repository = YoutubeDataRepository(session=Session())
 
-    def get_channel_list(self, channel_url: str) -> tuple[list[VideoSchema], str]:
+    def get_channel_info(self, channel_url: str) -> ChannelInfoSchema:
+        if not self._channel_data:
+            self._channel_data = self._get_channel_data(channel_url)
+        if self._channel_data:
+            try:
+                channel_info = ChannelInfoSchema(**self._channel_data)
+                # self._repository.add_or_update_channel(channel_info)
+                return channel_info
+            except Exception as e:
+                logger.error("Ошибка при обработке информации о канале:", exc_info=e)
+        return None
+
+    def get_video_list(self, channel_url: str) -> tuple[list[VideoSchema], str]:
+        if not self._channel_data:
+            self._channel_data = self._get_channel_data(channel_url)
+        video_list = []
+        channel_id = ""
+        if self._channel_data:
+            try:
+                video_list, channel_id = self._extract_video_list()
+                # Можно добавить логику сохранения списка видео в базу данных здесь, если требуется
+            except Exception as e:
+                logger.error("Ошибка при обработке списка видео:", exc_info=e)
+        return video_list, channel_id
+
+    def _get_channel_data(self, channel_url: str) -> dict:
         result = subprocess.run(
             ["yt-dlp", "-J", "--flat-playlist", "--quiet", "--no-warnings", "--no-progress", channel_url],
             capture_output=True,
@@ -25,44 +51,31 @@ class YTDownloader:
         )
         if result.returncode != 0:
             logger.error(f"Ошибка при выполнении yt-dlp для {channel_url}: {result.stderr}")
-            return []
+            return {}
 
-        video_list: list[VideoSchema] = []
         try:
             data = json.loads(result.stdout)
-            # Проверяем, является ли первый элемент в entries плейлистом
-            if data.get("entries") and data["entries"][0].get("_type") == "playlist":
-                # Обрабатываем каждый плейлист отдельно
-                for playlist_data in data["entries"]:
-                    try:
-                        channel_data = ChannelInfoSchema(**playlist_data)
-                        self._repository.add_or_update_channel(channel_data)
-                    except Exception as e:
-                        logger.error("Ошибка валидации данных от yt-dlp:")
-                        logger.error(e)
-                    channel_id = channel_data.channel_id
-                    video_list.extend(channel_data.entries)
-            else:
-                # Обрабатываем как одиночный плейлист
-                try:
-                    channel_data = ChannelInfoSchema(**playlist_data)
-                    self._repository.add_or_update_channel(channel_data)
-                except Exception as e:
-                    logger.error("Ошибка валидации данных от yt-dlp:")
-                    logger.error(e)
-                channel_id = channel_data.channel_id
-                video_list = channel_data.entries
+            return data
         except json.JSONDecodeError:
             logger.error(f"Не удалось декодировать JSON из вывода yt-dlp для {channel_url}")
-            return [], ""
         except KeyError:
             logger.error(f"Отсутствует ключевая информация в данных от {channel_url}")
-            return [], ""
+        return {}
+
+    def _extract_video_list(self) -> tuple[list[VideoSchema], str]:
+        video_list = []
+        channel_id = self._channel_data.get("channel_id", "")
+        if "entries" in self._channel_data:
+            for entry in self._channel_data["entries"]:
+                if entry.get("_type") == "playlist":
+                    video_list.extend([VideoSchema(**video) for video in entry.get("entries", [])])
+                else:
+                    video_list.append(VideoSchema(**entry))
         return video_list, channel_id
 
     def update_channels_metadata(self, channels_list: list[str]) -> None:
         for channel_url in channels_list:
-            videos, channel_id = self.get_channel_list(channel_url)
+            videos, channel_id = self.get_channelvideo_list(channel_url)
             for v in videos:
                 self._repository.add_video_metadata(v, channel_id)
 

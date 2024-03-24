@@ -225,7 +225,15 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         logger.warning(f"Video with youtube video_id '{youtube_video_id}' not found.")
         return None
 
-    def update_video_details(self, video_id: str, upload_date: datetime, like_count: int, tags: list[str]) -> None:
+    def update_video_details(
+        self,
+        video_id: str,
+        upload_date: datetime,
+        like_count: int,
+        commentCount: int,
+        tags: list[str],
+        defAudioLang: str,
+    ) -> None:
         video: Video = self._session.query(Video).filter_by(video_id=video_id).first()
         if video:
             video.upload_date = upload_date

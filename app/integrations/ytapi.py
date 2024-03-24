@@ -56,14 +56,18 @@ class YTApiClient:
                     video_id: str = item["id"]
                     upload_date = datetime.strptime(item["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ")
                     like_count = int(item.get("statistics", {}).get("likeCount", 0))
-                    tags = item["snippet"].get("tags", [])
+                    commentCount = int(item.get("statistics", {}).get("commentCount", 0))
+                    tags = item.get("snippet", {}).get("tags", [])
+                    defaultAudioLanguage = item.get("snippet", {}).get("defaultAudioLanguage", None)
 
                     # Проверка существования видео в базе данных
                     if not self._repository.get_video(video_id):
                         logger.warning(f"Video with ID {video_id} not found in the database. Skipping update.")
                         continue
 
-                    self._repository.update_video_details(video_id, upload_date, like_count, tags)
+                    self._repository.update_video_details(
+                        video_id, upload_date, like_count, commentCount, tags, defaultAudioLanguage
+                    )
                     logger.info(f"Updated video details for video ID {video_id}.")
                 except Exception as e:
                     self._repository.set_video_as_invalid(video_id)

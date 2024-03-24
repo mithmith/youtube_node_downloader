@@ -88,5 +88,9 @@ channels_list = {
         "https://www.youtube.com/@krasnoetv24",
         "https://www.youtube.com/@vladimir.metelkin",
         "https://www.youtube.com/@Red_Yurt",
+        "https://www.youtube.com/@Chamade",
+        "https://www.youtube.com/@mlobanov84",
+        "https://www.youtube.com/@PsySofia",
+        "https://www.youtube.com/@union_courier",
     ]
 }
