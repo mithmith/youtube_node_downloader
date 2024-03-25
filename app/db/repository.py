@@ -225,6 +225,13 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         logger.warning(f"Video with youtube video_id '{youtube_video_id}' not found.")
         return None
 
+    def get_new_videos(self, video_ids: list[str], channel_id: str) -> list[str]:
+        existing_v_ids = set(
+            v_id[0] for v_id in self.session.query(Video.video_id).filter(Video.channel_id == channel_id).all()
+        )
+        new_v_ids = [v_id for v_id in video_ids if v_id not in existing_v_ids]
+        return new_v_ids
+
     def update_video_details(
         self,
         video_id: str,

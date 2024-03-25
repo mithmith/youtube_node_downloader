@@ -2,31 +2,26 @@ from loguru import logger
 
 from app.db.data_table import Video
 from app.integrations.ytapi import YTApiClient
-from app.integrations.ytdlp import YTDownloader
-from app.schema import VideoSchema
+from app.integrations.ytdlp import YTChannelDownloader
+from app.schema import ChannelInfoSchema, VideoSchema
 
 
 class YTMonitorService:
-    def __init__(self) -> None:
-        self._api_client = YTApiClient()
-        self._yt_dlp_client = YTDownloader()
+    def __init__(self, channels_list: list[str]) -> None:
+        self._channels_list = channels_list
+        self._api_client: YTApiClient
+        self._yt_dlp_client: YTChannelDownloader
 
-    def monitor_channels_for_new_videos(self, channels_list: list[str]) -> list[Video]:
-        new_videos: list[Video] = []
-        for channel_url in channels_list:
+    def monitor_channels_for_new_videos(self) -> list[Video]:
+        channels_new_videos: list[Video] = []
+        for channel_url in self._channels_list:
+            logger.info(f"Getting video from: {channel_url}")
+            self._yt_dlp_client = YTChannelDownloader(channel_url)
             # Получаем список видео и id канала
-            channel_videos, channel_id = self._yt_dlp_client.get_channelvideo_list(channel_url)
-            for video_schema in channel_videos:
-                if not self._yt_dlp_client.video_exist(video_schema.id):
-                    # Видео новое, получаем дополнительную информацию с YouTube Data API
-                    try:
-                        video_info = self._api_client.get_video_info([video_schema.id])
-                        if video_info:
-                            # Обогащаем информацию о видео и заносим в базу
-                            raise
-                            enriched_video = self._api_client.update_video_info(video_info)
-                            new_videos.append(enriched_video)
-                    except Exception as e:
-                        logger.error(f"Ошибка при получении информации о видео {video_schema.id}: {e}")
+            # ytdlp_channel_info: ChannelInfoSchema = self._yt_dlp_client.get_channel_info()
+            video_list, channel_id = self._yt_dlp_client.get_video_list()
+            new_videos, old_videos = self._yt_dlp_client.filter_new_old(video_list, channel_id)
+            if new_videos:
+                channels_new_videos.extend(new_videos)
 
-        return new_videos
+        return channels_new_videos
