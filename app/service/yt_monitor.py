@@ -1,9 +1,9 @@
 from loguru import logger
 
-from app.db.data_table import Video
+from app.db.data_table import Channel, Thumbnail, Video
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
-from app.schema import ChannelInfoSchema, VideoSchema
+from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema
 
 
 class YTMonitorService:
@@ -25,3 +25,22 @@ class YTMonitorService:
                 channels_new_videos.extend(new_videos)
 
         return channels_new_videos
+
+    def _combine_channel_info(
+        self, ytdlp_channel_info: ChannelInfoSchema, ytapi_channel_info: ChannelAPIInfoSchema
+    ) -> Channel:
+        combined_channel = Channel(
+            channel_id=ytdlp_channel_info.channel_id or ytapi_channel_info.id,
+            customUrl=ytapi_channel_info.customUrl,
+            title=ytdlp_channel_info.title or ytapi_channel_info.title,
+            description=ytdlp_channel_info.description or ytapi_channel_info.description,
+            channel_url=ytdlp_channel_info.channel_url,
+            channel_follower_count=ytdlp_channel_info.channel_follower_count or ytapi_channel_info.subscriberCount,
+            viewCount=ytapi_channel_info.viewCount,
+            videoCount=ytapi_channel_info.videoCount,
+            published_at=ytapi_channel_info.published_at,
+            country=ytapi_channel_info.country,
+            tags=ytdlp_channel_info.tags,
+            thumbnails=[Thumbnail(**thumb.model_dump()) for thumb in ytdlp_channel_info.thumbnails],
+        )
+        return combined_channel

@@ -16,6 +16,7 @@ __pycache__/
 .env
 *oauth2*.json
 *secret*.json
+*.pickle
 *.pem
 *.key
 

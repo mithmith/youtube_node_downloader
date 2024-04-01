@@ -6,10 +6,10 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     app_host: str = "localhost"
     app_port: int = 9091
-    storage_path: str = "/mnt/volume"
 
-    your_username: str = "name"
-    your_password: str = "password"
+    storage_path: str = "/mnt/volume"
+    video_download_path: str = "/videos"
+    thumbnail_download_path: str = "/videos/thumbnail"
 
     db_host: str = "localhost"
     db_port: int = 5432
@@ -17,9 +17,6 @@ class Settings(BaseSettings):
     db_schema: str = "youtube"
     db_username: str = "postgres"
     db_password: str = "postgres"
-
-    video_download_path: str = "/video/download"
-    thumbnail_download_path: str = "/video/download/thumbnail"
 
     youtube_api_key: str = "youtube_key"
     youtube_secret_json: str = ""

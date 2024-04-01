@@ -1,14 +1,12 @@
 import os
-import sys
+import pickle
 from datetime import datetime
 
 import googleapiclient.discovery
-import httplib2
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError
 from loguru import logger
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.file import Storage
-from oauth2client.tools import argparser, run_flow
 
 from app.config import settings
 from app.db.base import Session
@@ -19,33 +17,62 @@ from app.schema import ChannelAPIInfoSchema
 
 class YTApiClient:
     def __init__(self):
-        self.scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
-        self.api_service_name = "youtube"
-        self.api_version = "v3"
-        self.client_secrets_file = settings.youtube_secret_json
-        self._repository = YoutubeDataRepository(session=Session())
-
-    def get_video_info(self, video_id: list[str]) -> dict:
         # Disable OAuthlib's HTTPS verification when running locally.
         # *DO NOT* leave this option enabled in production.
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+        self.scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
+        self.api_service_name = "youtube"
+        self.api_version = "v3"
+        self._client_secrets_file = settings.youtube_secret_json
+        self._repository = YoutubeDataRepository(session=Session())
+        self._credentials_file = f"google-oauth2.pickle"
 
-        # Get credentials and create an API client
-        flow = flow_from_clientsecrets(self.client_secrets_file, scope=self.scopes)
+    def _get_credentials(self):
+        """Получить или обновить учетные данные."""
+        credentials = None
+        if os.path.exists(self._credentials_file):
+            with open(self._credentials_file, "rb") as token:
+                credentials = pickle.load(token)
+        if not credentials or not credentials.valid:
+            if credentials and credentials.expired and credentials.refresh_token:
+                credentials.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
+                credentials = flow.run_local_server(port=0)
+            # Сохраняем полученные учетные данные для последующего использования
+            with open(self._credentials_file, "wb") as token:
+                pickle.dump(credentials, token)
+        return credentials
 
-        storage = Storage("%s-oauth2.json" % sys.argv[0])
-        credentials = storage.get()
-        if credentials is None or credentials.invalid:
-            flags = argparser.parse_args()
-            credentials = run_flow(flow, storage, flags)
+    def _make_request(self, func, *args, **kwargs):
+        """Выполнить запрос к YouTube API с повторной попыткой в случае ошибки."""
+        try:
+            return func(*args, **kwargs)
+        except HttpError as e:
+            if e.resp.status in [401, 403]:
+                os.remove(self._credentials_file)  # Удаляем просроченные учетные данные
+                credentials = self._get_credentials()  # Получаем новые учетные данные
+                youtube = googleapiclient.discovery.build(
+                    self.api_service_name, self.api_version, credentials=credentials
+                )
+                return func(*args, **kwargs)  # Повторяем запрос с новыми учетными данными
+            else:
+                raise
 
+    def get_video_info(self, video_ids: list[str]) -> dict:
+        """Получить информацию о видео."""
         youtube = googleapiclient.discovery.build(
-            self.api_service_name, self.api_version, http=credentials.authorize(httplib2.Http())
+            self.api_service_name, self.api_version, credentials=self._get_credentials()
         )
-
-        request = youtube.videos().list(part="snippet,statistics,status,contentDetails", id=",".join(video_id))
-        response = request.execute()
-
+        request_func = (
+            lambda: youtube.videos()
+            .list(
+                part="snippet,statistics,status,contentDetails",
+                id=",".join(video_ids),
+            )
+            .execute()
+        )
+        response = self._make_request(request_func)
         return response
 
     def update_video_info(self, video_ids: list[str]) -> None:
@@ -90,34 +117,27 @@ class YTApiClient:
         self._repository.reset_all_invalid_videos()
 
     def get_channel_info(self, channel_ids: list[str]) -> list[ChannelAPIInfoSchema]:
-        # Disable OAuthlib's HTTPS verification when running locally.
-        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
-        # Get credentials and create an API client
-        flow = flow_from_clientsecrets(self.client_secrets_file, scope=self.scopes)
-        storage = Storage("%s-oauth2.json" % sys.argv[0])
-        credentials = storage.get()
-        if credentials is None or credentials.invalid:
-            flags = argparser.parse_args()
-            credentials = run_flow(flow, storage, flags)
-
+        credentials = self._get_credentials()
         youtube = googleapiclient.discovery.build(self.api_service_name, self.api_version, credentials=credentials)
         channels_info: list[ChannelAPIInfoSchema] = []
 
-        try:
-            request = youtube.channels().list(
+        request_func = (
+            lambda: youtube.channels()
+            .list(
                 part="contentDetails,contentOwnerDetails,id,snippet,statistics,status,topicDetails",
                 id=",".join(channel_ids),
             )
-            response = request.execute()
+            .execute()
+        )
+        response = self._make_request(request_func)
+
+        try:
             # Преобразуем ответ в объект ChannelAPIInfoSchema
             if "items" in response:
                 for item in response["items"]:
                     channels_info.append(ChannelAPIInfoSchema.from_api_response(item))
 
             return channels_info
-        except HttpError as e:
-            logger.error(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
         except KeyError:
             logger.error("The response from the API did not contain the expected data.")
         except Exception as e:
