@@ -1,5 +1,3 @@
-import json
-
 from loguru import logger
 
 from app.const import channels_list

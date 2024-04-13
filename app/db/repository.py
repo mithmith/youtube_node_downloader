@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
 
 from app.db.base import BaseRepository
-from app.db.data_table import Channel, Tag, Thumbnail, Video, VideoTag, YTFormat
+from app.db.data_table import Channel, ChannelHistory, Tag, Thumbnail, Video, VideoHistory, VideoTag, YTFormat
 from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, ThumbnailSchema, VideoSchema, YTFormatSchema
 
 
@@ -39,7 +39,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
                 video = Video(video_id=video_schema.id, channel_id=channel_id)
                 self._session.add(video)
 
-            upload_date = datetime.utcfromtimestamp(video_schema.timestamp) if video_schema.timestamp else None
+            upload_date = datetime.fromtimestamp(video_schema.timestamp) if video_schema.timestamp else None
             video.title = video_schema.title
             video.description = video_schema.description
             video.url = video_schema.url
@@ -346,3 +346,21 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             self._session.commit()
         else:
             logger.warning(f"Thumbnail not found for video ID {video_id} with URL {thumbnail_url}.")
+
+    def add_channel_history(self, channel_info: Channel):
+        history: ChannelHistory = ChannelHistory(
+            channel_id=channel_info.id,
+            follower_count=channel_info.channel_follower_count,
+            view_count=channel_info.viewCount,
+            video_count=channel_info.videoCount,
+        )
+        self.add(history)
+
+    def add_video_history(self, video_info: Video):
+        history: VideoHistory = VideoHistory(
+            video_id=video_info.id,
+            view_count=video_info.view_count,
+            like_count=video_info.like_count,
+            comment_count=video_info.comment_count,
+        )
+        self.add(history)
