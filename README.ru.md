@@ -44,3 +44,39 @@ pip install google-auth-httplib2
 ```
 А также проект `yt-dlp`:
 https://github.com/yt-dlp/yt-dlp
+
+
+# Класс YoutubeDataRepository
+
+## 1. Методы добавления (Create)
+- add_channel - добавление канала.
+- add_video - добавление видео.
+- add_tag - добавление тега.
+- add_thumbnail - добавление миниатюры.
+- add_video_format - добавление формата видео.
+- add_channel_history - добавление истории канала.
+- add_video_history - добавление истории видео.
+
+## 2. Методы получения данных (Retrieve)
+- get_channel_by_id - получение канала по ID.
+- get_video_by_id - получение видео по ID.
+- get_channels - получение списка каналов.
+- get_channel_videos - получение видео определённого канала.
+- get_channel_id_by_url - получение ID канала по URL.
+- get_videos_without_upload_date - получение видео без даты загрузки.
+- get_video_ids_without_formats - получение ID видео без форматов.
+- get_new_and_existing_video_ids - возвращает новые и уже существующие идентификаторы видео.
+
+## 3. Методы обновления (Update)
+- update_channel_details - обновление деталей канала.
+- update_video_details - обновление деталей видео.
+- update_video_path - обновление пути файла видео.
+- update_thumbnail_path - обновление пути файла миниатюры.
+- set_video_as_invalid - пометить видео как недействительное.
+
+## 4. Методы удаления (Delete)
+- delete_video - удаление видео.
+
+## 5. Дополнительные методы
+- reset_all_invalid_videos - сброс статуса всех недействительных видео.
+- bulk_add_tags - массовое добавление тегов.

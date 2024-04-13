@@ -63,18 +63,29 @@ class YTMonitorService:
         )
         return combined_channel
 
-    def _process_channel_info(self, channel_info):
+    def _process_channel_info(self, channel_info: ChannelInfoSchema) -> None:
+        """
+        Processes the channel information:
+        Adds new channel to the database if it does not exist and logs the historical data.
+        """
         existing_channel = self._repository.get_channel_by_id(channel_info.channel_id)
         if not existing_channel:
             self._repository.add_channel(channel_info)
         self._repository.add_channel_history(channel_info)
 
-    def _process_new_videos(self, new_videos, channel_id):
+    def _process_new_videos(self, new_videos: list[VideoSchema], channel_id: str) -> None:
+        """
+        Processes new videos:
+        Adds each new video to the database and logs the historical data.
+        """
         for video in new_videos:
             self._repository.add_video(video)
             self._repository.add_video_history(video, channel_id)
 
-    def _process_old_videos(self, old_videos, channel_id):
+    def _process_old_videos(self, old_videos: list[VideoSchema], channel_id: str) -> None:
+        """
+        Processes old videos:
+        Logs the historical data for each video already present in the database.
+        """
         for video in old_videos:
             self._repository.add_video_history(video, channel_id)
-            
