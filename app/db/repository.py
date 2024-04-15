@@ -62,11 +62,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         self.commit()
         return channel
 
-    def add_video(
-        self,
-        video_schema: VideoSchema,
-        channel_id: str
-    ) -> Video:
+    def add_video(self, video_schema: VideoSchema, channel_id: str) -> Video:
         """
         Adds a new video or updates an existing one based on the provided video schema.
 
@@ -511,9 +507,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         channel: Channel = self._session.query(Channel).filter_by(channel_id=channel_info.id).first()
 
         # Convert ChannelAPIInfoSchema to dictionary, excluding unset values
-        channel_dict = channel_info.model_dump(
-            exclude_unset=True
-        )
+        channel_dict = channel_info.model_dump(exclude_unset=True)
 
         if channel:
             # If the channel exists, update its attributes
