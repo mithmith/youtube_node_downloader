@@ -48,7 +48,7 @@ class YTChannelDownloader:
         self, video_list: list[VideoSchema], channel_id: str
     ) -> tuple[list[VideoSchema], list[VideoSchema]]:
         v_ids = [v.id for v in video_list]
-        new_v_ids = set(self._repository.get_new_videos(v_ids, channel_id))
+        new_v_ids, _ = self._repository.get_new_and_existing_video_ids(v_ids, channel_id)
         new_videos = [v for v in video_list if v.id in new_v_ids]
         old_videos = [v for v in video_list if v.id not in new_v_ids]
         return new_videos, old_videos

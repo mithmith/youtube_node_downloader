@@ -3,6 +3,7 @@ import pickle
 from datetime import datetime
 
 import googleapiclient.discovery
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError
@@ -30,20 +31,37 @@ class YTApiClient:
     def _get_credentials(self):
         """Получить или обновить учетные данные."""
         credentials = None
+
+        # Load credentials from file if available
         if os.path.exists(self._credentials_file):
             with open(self._credentials_file, "rb") as token:
                 credentials = pickle.load(token)
+
+        # Check if credentials are valid
         if not credentials or not credentials.valid:
-            if credentials and credentials.expired and credentials.refresh_token:
-                credentials.refresh(Request())
-            else:
+            try:
+                if credentials and credentials.expired and credentials.refresh_token:
+                    # Refresh existing credentials
+                    credentials.refresh(Request())
+                else:
+                    # Perform full authorization
+                    flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
+                    credentials = flow.run_local_server(port=0)
+
+                # Save credentials for future use
+                with open(self._credentials_file, "wb") as token:
+                    pickle.dump(credentials, token)
+            except RefreshError:
+                logger.error("Refresh token invalid or expired. Removing old credentials.")
+                if os.path.exists(self._credentials_file):
+                    os.remove(self._credentials_file)
                 flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
                 credentials = flow.run_local_server(port=0)
-            # Сохраняем полученные учетные данные для последующего использования
-            with open(self._credentials_file, "wb") as token:
-                pickle.dump(credentials, token)
-        return credentials
+                with open(self._credentials_file, "wb") as token:
+                    pickle.dump(credentials, token)
 
+        return credentials
+    
     def _make_request(self, func, *args, **kwargs):
         """Выполнить запрос к YouTube API с повторной попыткой в случае ошибки."""
         try:
@@ -59,21 +77,41 @@ class YTApiClient:
             else:
                 raise
 
-    def get_video_info(self, video_ids: list[str]) -> dict:
-        """Получить информацию о видео."""
+    def get_video_info(self, video_ids: list[str]) -> list[dict]:
+        """
+        Retrieve detailed information for a list of videos using the YouTube API.
+
+        Args:
+            video_ids (list[str]): List of video IDs.
+
+        Returns:
+            list[dict]: A list of video details retrieved from the YouTube API.
+        """
         youtube = googleapiclient.discovery.build(
             self.api_service_name, self.api_version, credentials=self._get_credentials()
         )
-        request_func = (
-            lambda: youtube.videos()
-            .list(
-                part="snippet,statistics,status,contentDetails",
-                id=",".join(video_ids),
-            )
-            .execute()
-        )
-        response = self._make_request(request_func)
-        return response
+        
+        # Split the video IDs into chunks of 50
+        chunk_size = 50
+        video_chunks = [video_ids[i:i + chunk_size] for i in range(0, len(video_ids), chunk_size)]
+        all_videos_info = []
+
+        for chunk in video_chunks:
+            try:
+                request_func = (
+                    lambda: youtube.videos()
+                    .list(
+                        part="snippet,statistics,status,contentDetails",
+                        id=",".join(chunk),
+                    )
+                    .execute()
+                )
+                response = self._make_request(request_func)
+                all_videos_info.extend(response.get("items", []))  # Add video data to the results
+            except Exception as e:
+                logger.error(f"Error retrieving video info for chunk {chunk}: {e}")
+        return all_videos_info
+
 
     def update_video_info(self, video_ids: list[str]) -> None:
         video_info = self.get_video_info(video_ids)

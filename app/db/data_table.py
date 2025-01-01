@@ -87,7 +87,7 @@ class Video(Base, table=True):
     like_count: Optional[int] = Field(default=0)
     comment_count: int = Field(default=0, nullable=True)
     upload_date: Optional[datetime] = Field(default=None)
-    defaultAudioLanguage: Optional[str] = Field(default=None)
+    defaultaudiolanguage: Optional[str] = Field(default=None)
     channel: Channel = Relationship(back_populates="videos")
     thumbnails: List["Thumbnail"] = Relationship(back_populates="video")
     formats: List["YTFormat"] = Relationship(back_populates="video")

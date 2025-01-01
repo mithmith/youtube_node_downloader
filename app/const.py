@@ -1,12 +1,12 @@
 channels_list = {
     "channels": [
+        "https://www.youtube.com/@LeninCrew",
         "https://www.youtube.com/@bolsheviktv3342",
         "https://www.youtube.com/@comradmajor",
         "https://www.youtube.com/@derengelsaudio6626",
         "https://www.youtube.com/@EngelsGroup",
         "https://www.youtube.com/@FreieFrauenMarx",
         "https://www.youtube.com/@LenRu",
-        "https://www.youtube.com/@LeninCrew",
         "https://www.youtube.com/@LenRuLive",
         "https://www.youtube.com/@libretrack9214",
         "https://www.youtube.com/@newleft6879",
@@ -92,5 +92,10 @@ channels_list = {
         "https://www.youtube.com/@mlobanov84",
         "https://www.youtube.com/@PsySofia",
         "https://www.youtube.com/@union_courier",
+        "https://www.youtube.com/@trudobudni21",
+        "https://www.youtube.com/@SuccessfulRU",
+        "https://www.youtube.com/@DaVinciRussia",
+        "https://www.youtube.com/@suf_union",
+        "https://www.youtube.com/@thepeopleofbaikal",
     ]
 }
