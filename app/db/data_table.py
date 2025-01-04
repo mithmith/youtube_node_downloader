@@ -7,6 +7,7 @@ from sqlmodel import Field, Relationship
 
 from app.config import settings
 from app.db.base import Base
+from app.schema import VideoSchema
 
 
 class VideoTag(Base, table=True):
@@ -88,6 +89,8 @@ class Video(Base, table=True):
     comment_count: int = Field(default=0, nullable=True)
     upload_date: Optional[datetime] = Field(default=None)
     defaultaudiolanguage: Optional[str] = Field(default=None)
+    last_update: datetime = Field(default_factory=lambda: datetime.now().replace(microsecond=0))
+
     channel: Channel = Relationship(back_populates="videos")
     thumbnails: List["Thumbnail"] = Relationship(back_populates="video")
     formats: List["YTFormat"] = Relationship(back_populates="video")
@@ -106,6 +109,24 @@ class Video(Base, table=True):
         arbitrary_types_allowed = True  # Разрешаем использование произвольных типов
         from_attributes = True
 
+    @classmethod
+    def from_schema(cls, video_schema: VideoSchema, channel_id: str) -> "Video":
+        """Creates a Video object from a VideoSchema and channel_id."""
+        upload_date = datetime.fromtimestamp(video_schema.timestamp) if video_schema.timestamp else None
+        return cls(
+            video_id=video_schema.id,
+            channel_id=channel_id,
+            url=video_schema.url,
+            title=video_schema.title,
+            description=video_schema.description,
+            duration=video_schema.duration or 0,
+            view_count=video_schema.view_count,
+            like_count=video_schema.like_count or 0,
+            comment_count=video_schema.commentCount or 0,
+            upload_date=upload_date,
+            defaultaudiolanguage=video_schema.defaultAudioLanguage,
+        )
+
 
 class VideoHistory(Base, table=True):
     __tablename__ = "video_history"
@@ -113,9 +134,9 @@ class VideoHistory(Base, table=True):
 
     id: int = Field(default=None, primary_key=True)
     video_id: UUID = Field(sa_column=Column(UUID(as_uuid=True), ForeignKey("videos.id"), nullable=False))
-    view_count: int = Field(default=0, nullable=True)
-    like_count: int = Field(default=0, nullable=True)
-    comment_count: int = Field(default=0, nullable=True)
+    view_count: int = Field(nullable=True)
+    like_count: int = Field(nullable=True)
+    comment_count: int = Field(nullable=True)
     recorded_at: datetime = Field(default=datetime.now().replace(microsecond=0))
 
     video: "Video" = Relationship(back_populates="history")

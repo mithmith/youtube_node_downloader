@@ -1,3 +1,5 @@
+import logging
+
 from loguru import logger
 
 from app.const import channels_list
@@ -6,6 +8,14 @@ from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
 from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema
 from app.service.yt_monitor import YTMonitorService
+
+# Настройка уровня логирования SQLAlchemy
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.orm").setLevel(logging.WARNING)
+# Удаляем все дополнительные обработчики, если они существуют
+for handler in logging.getLogger("sqlalchemy.engine").handlers:
+    logging.getLogger("sqlalchemy.engine").removeHandler(handler)
 
 # 1
 downloader = YTChannelDownloader("https://www.youtube.com/@BorisYulin")
@@ -36,9 +46,9 @@ logger.debug(f"ytapi_channel_info: {ytapi_channel_info}")
 #     downloader.update_video_formats()
 
 # 4
-monitor = YTMonitorService(channels_list["channels"])
+monitor = YTMonitorService(channels_list["channels"][:2])
 channel_info: Channel = monitor._combine_channel_info(ytdlp_channel_info, ytapi_channel_info)
 logger.debug(f"channel_info: {channel_info}")
 # new_videos = monitor.monitor_channels_for_newold_videos()
 # logger.debug(f"new_videos: {len(new_videos)}")
-monitor.run()
+monitor.run(monitor_new=True, monitor_history=True)

@@ -1,8 +1,10 @@
 import os
 import pickle
 from datetime import datetime
+from typing import Optional
 
 import googleapiclient.discovery
+import isodate
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -13,7 +15,7 @@ from app.config import settings
 from app.db.base import Session
 from app.db.data_table import Channel, Video
 from app.db.repository import YoutubeDataRepository
-from app.schema import ChannelAPIInfoSchema
+from app.schema import ChannelAPIInfoSchema, ThumbnailSchema, VideoSchema
 
 
 class YTApiClient:
@@ -61,7 +63,7 @@ class YTApiClient:
                     pickle.dump(credentials, token)
 
         return credentials
-    
+
     def _make_request(self, func, *args, **kwargs):
         """Выполнить запрос к YouTube API с повторной попыткой в случае ошибки."""
         try:
@@ -90,10 +92,10 @@ class YTApiClient:
         youtube = googleapiclient.discovery.build(
             self.api_service_name, self.api_version, credentials=self._get_credentials()
         )
-        
+
         # Split the video IDs into chunks of 50
         chunk_size = 50
-        video_chunks = [video_ids[i:i + chunk_size] for i in range(0, len(video_ids), chunk_size)]
+        video_chunks = [video_ids[i : i + chunk_size] for i in range(0, len(video_ids), chunk_size)]
         all_videos_info = []
 
         for chunk in video_chunks:
@@ -112,6 +114,74 @@ class YTApiClient:
                 logger.error(f"Error retrieving video info for chunk {chunk}: {e}")
         return all_videos_info
 
+    def get_video_info_list(self, video_ids: list[str]) -> list[VideoSchema]:
+        """
+        Retrieve detailed information for a list of videos and convert them to VideoSchema.
+
+        Args:
+            video_ids (list[str]): List of video IDs.
+
+        Returns:
+            list[VideoSchema]: A list of VideoSchema objects with detailed video information.
+        """
+        video_info_list = self.get_video_info(video_ids)  # Получаем информацию о видео через API
+        video_schemas = []
+
+        for video_info in video_info_list:
+            try:
+                # Преобразуем информацию из API в объект VideoSchema
+                snippet = video_info.get("snippet", {})
+                statistics = video_info.get("statistics", {})
+                content_details = video_info.get("contentDetails", {})
+
+                video_schema = VideoSchema(
+                    id=video_info["id"],
+                    url=f"https://www.youtube.com/watch?v={video_info['id']}",
+                    title=snippet.get("title", ""),
+                    description=snippet.get("description", ""),
+                    tags=snippet.get("tags", []),
+                    view_count=int(statistics.get("viewCount", 0)),
+                    like_count=int(statistics.get("likeCount", 0)),
+                    commentCount=int(statistics.get("commentCount", 0)),
+                    duration=self._parse_duration(content_details.get("duration", "")),
+                    thumbnails=[
+                        ThumbnailSchema(
+                            url=thumbnail.get("url"),
+                            width=thumbnail.get("width"),
+                            height=thumbnail.get("height"),
+                        )
+                        for thumbnail in snippet.get("thumbnails", {}).values()
+                    ],
+                    timestamp=(
+                        datetime.strptime(snippet.get("publishedAt", ""), "%Y-%m-%dT%H:%M:%SZ").timestamp()
+                        if snippet.get("publishedAt")
+                        else None
+                    ),
+                    defaultAudioLanguage=snippet.get("defaultAudioLanguage"),
+                )
+                video_schemas.append(video_schema)
+
+            except Exception as e:
+                logger.error(f"Error processing video ID {video_info.get('id')}: {e}")
+
+        return video_schemas
+
+    def _parse_duration(self, duration: str) -> Optional[int]:
+        """
+        Parse the ISO 8601 duration string to seconds.
+
+        Args:
+            duration (str): The ISO 8601 duration string (e.g., "PT1H2M3S").
+
+        Returns:
+            Optional[int]: Duration in seconds, or None if parsing fails.
+        """
+        try:
+            parsed_duration = isodate.parse_duration(duration)
+            return int(parsed_duration.total_seconds())
+        except Exception as e:
+            logger.error(f"Error parsing duration '{duration}': {e}")
+            return None
 
     def update_video_info(self, video_ids: list[str]) -> None:
         video_info = self.get_video_info(video_ids)

@@ -16,8 +16,8 @@ class ThumbnailSchema(BaseModel):
 
 class VideoSchema(BaseModel):
     _type: str
-    ie_key: Optional[str] = ""
-    id: str  # youtube video id
+    ie_key: Optional[str] = ""  # Поле из yt-dlp
+    id: str  # YouTube video ID
     url: Optional[str] = None
     title: str
     tags: list[str] = []
@@ -25,12 +25,13 @@ class VideoSchema(BaseModel):
     duration: Optional[int] = None
     thumbnails: list[ThumbnailSchema] = []
     view_count: Optional[int] = None
+    like_count: Optional[int] = None
     commentCount: Optional[int] = None
-    timestamp: Optional[int] = None
-    release_timestamp: Optional[int] = None
-    availability: Optional[str] = None
-    live_status: Optional[str] = None
-    channel_is_verified: Optional[bool] = None
+    timestamp: Optional[int] = None  # publishedAt: upload_date
+    release_timestamp: Optional[int] = None  # Поле из yt-dlp
+    availability: Optional[str] = None  # Поле из API
+    live_status: Optional[str] = None  # Поле из API
+    channel_is_verified: Optional[bool] = None  # Поле из API
     defaultAudioLanguage: Optional[str] = None
 
     class Config:

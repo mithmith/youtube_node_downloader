@@ -8,7 +8,7 @@ from sqlmodel import SQLModel, select
 
 from app.config import settings
 
-engine = create_engine(settings.database_url, echo=True)
+engine = create_engine(settings.database_url, echo=False)
 Session = orm.sessionmaker(engine, expire_on_commit=False)
 
 

@@ -1,87 +1,128 @@
+from datetime import datetime
+from multiprocessing import Process
 from time import sleep
 from typing import Optional
 
 from loguru import logger
 
-from app.db.data_table import Channel, Thumbnail, Video
-from app.db.repository import YoutubeDataRepository
 from app.db.base import Session
+from app.db.data_table import Channel, Thumbnail, Video, VideoHistory
+from app.db.repository import YoutubeDataRepository
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
 from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, VideoSchema
 
 
 class YTMonitorService:
-    def __init__(self, channels_list: list[str], timeout: int = 600) -> None:
+    def __init__(self, channels_list: list[str], new_videos_timeout: int = 600, history_timeout: int = 7200) -> None:
         self._channels_list = channels_list
-        self._api_client: YTApiClient
-        self._yt_dlp_client: YTChannelDownloader
-        self._repository = YoutubeDataRepository(session=Session())
-        self._timeout = timeout
+        self._new_videos_timeout = new_videos_timeout
+        self._history_timeout = history_timeout
 
-    def run(self):
+    def run(self, monitor_new: bool = True, monitor_history: bool = True):
+        """Запускает процессы мониторинга новых видео и истории каналов."""
+        processes: list[Process] = []
+
+        if monitor_new:
+            new_videos_process = Process(target=self._monitor_new_videos)
+            processes.append(new_videos_process)
+            new_videos_process.start()
+
+        if monitor_history:
+            history_process = Process(target=self._monitor_channel_videos_history)
+            processes.append(history_process)
+            history_process.start()
+
+        for process in processes:
+            process.join()
+
+    def _monitor_new_videos(self):
+        """Мониторинг новых видео с заданным интервалом."""
         while True:
-            self.monitor_channels_for_newold_videos()
-            sleep(self._timeout)
+            logger.info("Starting new video monitoring...")
+            for channel_url in self._channels_list:
+                logger.info(f"Processing new videos for channel: {channel_url}")
+                try:
+                    self._process_channel_videos(channel_url, process_new=True)
+                except Exception as e:
+                    logger.error(f"Error monitoring new videos for {channel_url}: {e}")
+            logger.info(f"Waiting for {self._new_videos_timeout} seconds")
+            sleep(self._new_videos_timeout)
 
-    def monitor_channels_for_newold_videos(self) -> None:
-        for channel_url in self._channels_list:
-            logger.info(f"Getting video from: {channel_url}")
-            self._yt_dlp_client = YTChannelDownloader(channel_url)
-            self._api_client = YTApiClient()
+    def _monitor_channel_videos_history(self):
+        """Мониторинг истории каналов с заданным интервалом."""
+        while True:
+            logger.info("Starting channel history monitoring...")
+            for channel_url in self._channels_list:
+                logger.info(f"Processing channel history for: {channel_url}")
+                try:
+                    self._process_channel_videos(channel_url, process_old=True)
+                except Exception as e:
+                    logger.error(f"Error updating channel history for {channel_url}: {e}")
+            logger.info(f"Waiting for {self._history_timeout} seconds")
+            sleep(self._history_timeout)
 
-            # Получаем информацию о канале через yt-dlp
-            ytdlp_channel_info: Optional[ChannelInfoSchema] = self._yt_dlp_client.get_channel_info()
+    def _process_channel_videos(self, channel_url: str, process_new: bool = False, process_old: bool = False):
+        """Обработка новых и старых видео для канала."""
+        yt_dlp_client = YTChannelDownloader(channel_url)
+        api_client = YTApiClient()
 
-            if not ytdlp_channel_info:
-                logger.error(f"Failed to retrieve channel info for {channel_url}. Skipping...")
-                continue
+        # Получение информации о канале через yt-dlp
+        ytdlp_channel_info: Optional[ChannelInfoSchema] = yt_dlp_client.get_channel_info()
 
-            # Получаем информацию о канале через YouTube API
-            try:
-                ytapi_channels_info: list[ChannelAPIInfoSchema] = self._api_client.get_channel_info(
-                    [ytdlp_channel_info.channel_id]
-                )
-            except Exception as e:
-                logger.error(f"Error retrieving channel info from YouTube API for {channel_url}: {e}")
-                continue
+        if not ytdlp_channel_info:
+            logger.error(f"Failed to retrieve channel info for {channel_url}. Skipping...")
+            return
 
-            if not ytapi_channels_info:
-                logger.error(f"No channel info returned by YouTube API for {channel_url}. Skipping...")
-                continue
+        # Получение информации о канале через API
+        ytapi_channel_info: list[ChannelAPIInfoSchema] = api_client.get_channel_info([ytdlp_channel_info.channel_id])
 
-            channel_info: Channel = self._combine_channel_info(ytdlp_channel_info, ytapi_channels_info[0])
+        if not ytapi_channel_info[0]:
+            logger.error(f"No channel info returned by YouTube API for {channel_url}. Skipping...")
+            return
 
-            # Получаем список видео
-            try:
-                video_list, channel_id = self._yt_dlp_client.get_video_list()
-            except Exception as e:
-                logger.error(f"Error retrieving video list for {channel_url}: {e}")
-                continue
+        # Объединение и обработка информации о канале
+        self._process_channel_info(
+            self._combine_channel_info(ytdlp_channel_info, ytapi_channel_info[0]), add_history=process_old
+        )
 
-            # Дополняем данные о видео через YouTube API
-            try:
-                video_ids = [video.id for video in video_list]
-                api_videos_info = self._api_client.get_video_info(video_ids)
-            except Exception as e:
-                logger.error(f"Error retrieving video info from YouTube API for {channel_url}: {e}")
-                api_videos_info = []
-                exit()
+        # Получение списка видео через yt-dlp
+        video_list, channel_id = yt_dlp_client.get_video_list()
+        # Фильтруем видео на новые и старые
+        new_videos, old_videos = yt_dlp_client.filter_new_old(video_list, channel_id)
+        print(f"video_list len: {len(video_list)}")
+        print(f"new_videos len: {len(new_videos)}")
+        print(f"old_videos len: {len(old_videos)}\n")
 
-            # Объединяем данные о видео из yt-dlp и API
-            complete_video_list = self._combine_video_info(video_list, api_videos_info)
+        # Определяем, какие видео нужно обрабатывать
+        videos_to_process = []
+        if process_new and process_old:
+            videos_to_process = video_list
+        elif process_new:
+            videos_to_process = new_videos
+        elif process_old:
+            videos_to_process = old_videos
 
-            # Фильтруем видео на новые и старые
-            new_videos, old_videos = self._yt_dlp_client.filter_new_old(complete_video_list, channel_id)
+        # Получение дополнительной информации о видео через YouTube API
+        try:
+            video_ids = [video.id for video in videos_to_process]
+            api_videos_info = api_client.get_video_info_list(video_ids)
+        except Exception as e:
+            logger.error(f"Error retrieving video info from YouTube API for {channel_url}: {e}")
+            return
 
-            # Обрабатываем информацию о канале и видео
-            if channel_info:
-                self._process_channel_info(channel_info)
-            if new_videos:
-                self._process_new_videos(new_videos, channel_id)
-            if old_videos:
-                self._process_old_videos(old_videos, channel_id)
-
+        # Объединение данных о видео
+        complete_video_list = self._combine_video_info(videos_to_process, api_videos_info)
+        new_videos, old_videos = yt_dlp_client.filter_new_old(complete_video_list, channel_id)
+        print(f"complete_video_list len: {len(complete_video_list)}")
+        print(f"new_videos len: {len(new_videos)}")
+        print(f"old_videos len: {len(old_videos)}")
+        if process_new and new_videos:
+            print(new_videos)
+            exit()
+            self._process_new_videos(new_videos, channel_id)
+        if process_old and old_videos:
+            self._process_old_videos(old_videos)
 
     def _combine_channel_info(
         self, ytdlp_channel_info: ChannelInfoSchema, ytapi_channel_info: ChannelAPIInfoSchema
@@ -102,36 +143,50 @@ class YTMonitorService:
         )
         return combined_channel
 
-    def _process_channel_info(self, channel_info: ChannelInfoSchema) -> None:
+    def _process_channel_info(self, channel_info: ChannelInfoSchema, add_history: bool) -> None:
         """
         Processes the channel information:
         Adds new channel to the database if it does not exist and logs the historical data.
         """
-        existing_channel = self._repository.get_channel_by_id(channel_info.channel_id)
-        if not existing_channel:
-            self._repository.add_channel(channel_info)
-        self._repository.add_channel_history(channel_info)
+        with Session() as session:
+            repository = YoutubeDataRepository(session)
+            existing_channel = repository.get_channel_by_id(channel_info.channel_id)
+            if not existing_channel:
+                existing_channel = repository.add_channel(channel_info)
+            if add_history:
+                repository.add_channel_history(existing_channel)
 
     def _combine_video_info(self, yt_dlp_videos: list[VideoSchema], api_videos: list[VideoSchema]) -> list[VideoSchema]:
         """Combine video data from yt-dlp and YouTube API."""
         api_videos_dict = {video.id: video for video in api_videos}
-        
+
         complete_videos = []
-        for yt_video in yt_dlp_videos:
-            api_video = api_videos_dict.get(yt_video.id)
-            if api_video:
+        for yt_dlp_video in yt_dlp_videos:
+            yt_api_video = api_videos_dict.get(yt_dlp_video.id)
+            if yt_api_video:
                 # Объединяем данные из yt-dlp и API
                 complete_video = VideoSchema(
-                    **yt_video.model_dump(),
-                    commentCount=api_video.commentCount or yt_video.commentCount,
-                    view_count=api_video.view_count or yt_video.view_count,
-                    defaultAudioLanguage=api_video.defaultAudioLanguage or yt_video.defaultAudioLanguage,
-                    description=api_video.description or yt_video.description,
-                    tags=api_video.tags or yt_video.tags,
+                    ie_key=yt_dlp_video.ie_key,  # Используем данные yt-dlp
+                    id=yt_dlp_video.id,
+                    url=yt_dlp_video.url or yt_api_video.url,
+                    title=yt_dlp_video.title or yt_api_video.title,
+                    description=yt_api_video.description,
+                    tags=yt_dlp_video.tags + yt_api_video.tags,
+                    duration=yt_dlp_video.duration or yt_api_video.duration,
+                    thumbnails=yt_dlp_video.thumbnails + yt_api_video.thumbnails,
+                    view_count=yt_api_video.view_count,  # Предпочитаем данные API для точности
+                    like_count=yt_api_video.like_count,
+                    commentCount=yt_api_video.commentCount,  # Берем из API
+                    timestamp=yt_dlp_video.timestamp or yt_api_video.timestamp,
+                    release_timestamp=yt_dlp_video.release_timestamp,  # Данные из yt-dlp
+                    availability=yt_api_video.availability,  # Берем из API
+                    live_status=yt_api_video.live_status,  # Берем из API
+                    channel_is_verified=yt_api_video.channel_is_verified,  # Берем из API
+                    defaultAudioLanguage=yt_api_video.defaultAudioLanguage,
                 )
             else:
                 # Используем только данные из yt-dlp, если API не возвращает данные
-                complete_video = yt_video
+                complete_video = yt_dlp_video
             complete_videos.append(complete_video)
         return complete_videos
 
@@ -140,16 +195,26 @@ class YTMonitorService:
         Processes new videos:
         Adds each new video to the database and logs the historical data.
         """
-        for video_schema in new_videos:
-            video: Video = Video(id=video_schema.id)
-            self._repository.add_video(video_schema, channel_id)
-            self._repository.add_video_history(video)
+        with Session() as session:
+            repository = YoutubeDataRepository(session)
+            for video_schema in new_videos:
+                try:
+                    # Добавляем видео в базу данных
+                    repository.add_video(video_schema, channel_id)
+                    # Добавляем исторические данные о видео
+                    repository.add_video_history(video_schema)
+                    logger.info(f"Added new video: {video_schema.title} (ID: {video_schema.id})")
+                except Exception as e:
+                    logger.error(f"Failed to process video {video_schema.id}: {e}")
+                    continue
 
-    def _process_old_videos(self, old_videos: list[VideoSchema], channel_id: str) -> None:
+    def _process_old_videos(self, old_videos: list[VideoSchema]) -> None:
         """
         Processes old videos:
         Logs the historical data for each video already present in the database.
         """
-        for video_schema in old_videos:
-            video: Video = self._repository.get_video_by_id(youtube_video_id=video_schema.id)
-            self._repository.add_video_history(video)
+        with Session() as session:
+            repository = YoutubeDataRepository(session)
+            for video_schema in old_videos:
+                repository.update_video(video_schema)
+                repository.add_video_history(video_schema)

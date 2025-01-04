@@ -46,19 +46,19 @@ class YoutubeDataRepository(BaseRepository[Channel]):
                 "uploader_url",
             },
         )
-
-        if channel:
-            # Update the existing Channel object
-            for key, value in channel_dict.items():
-                if hasattr(channel, key):
-                    setattr(channel, key, value)
-        else:
-            # Create a new Channel object and add it to the session
-            channel = Channel(**channel_dict)
-            self._session.add(channel)
-        self.commit()
-        for thumbnail_schema in channel_data.thumbnails:
-            self.add_thumbnail(thumbnail_schema, channel_id=channel_data.channel_id)
+        with self._session.no_autoflush:
+            if channel:
+                # Update the existing Channel object
+                for key, value in channel_dict.items():
+                    if hasattr(channel, key):
+                        setattr(channel, key, value)
+            else:
+                # Create a new Channel object and add it to the session
+                channel = Channel(**channel_dict)
+                self._session.add(channel)
+            self.commit()
+            for thumbnail_schema in channel_data.thumbnails:
+                self.add_thumbnail(thumbnail_schema, channel_id=channel_data.channel_id)
         self.commit()
         return channel
 
@@ -84,8 +84,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             The method also manages tags and thumbnails by adding new ones or linking existing ones to the video.
         """
         # Check if the channel exists
-        channel: Channel = self._session.get(Channel, channel_id)
-        if not channel:
+        if not self._session.get(Channel, channel_id):
             logger.error(f"Channel with ID {channel_id} not found.")
             raise ValueError("Channel not found")
 
@@ -93,17 +92,9 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             # Create or update the Video object
             video: Video = self._session.query(Video).filter_by(video_id=video_schema.id).first()
             if not video:
-                video = Video(video_id=video_schema.id, channel_id=channel_id)
+                video = Video.from_schema(video_schema, channel_id)
+                video.last_update = datetime.now().replace(microsecond=0)
                 self._session.add(video)
-
-            # Set attributes from video schema
-            upload_date = datetime.fromtimestamp(video_schema.timestamp) if video_schema.timestamp else None
-            video.title = video_schema.title
-            video.description = video_schema.description
-            video.url = video_schema.url
-            video.duration = video_schema.duration or 0
-            video.view_count = video_schema.view_count
-            video.upload_date = upload_date
 
             # Save the video to obtain video.id
             self.commit()
@@ -274,36 +265,23 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             The method logs the action and commits the new ChannelHistory record to the database.
         """
         history: ChannelHistory = ChannelHistory(
-            channel_id=channel_info.id,
+            channel_id=channel_info.channel_id,
             follower_count=channel_info.channel_follower_count,
             view_count=channel_info.viewCount,
             video_count=channel_info.videoCount,
         )
         self.add(history)
 
-    def add_video_history(self, video_info: Video) -> None:
-        """
-        Adds historical data for a video to the database.
-
-        Args:
-            video_info (Video): The video object containing the data to record in history.
-
-        Returns:
-            None
-
-        Description:
-            This method creates a new VideoHistory record using the data from the provided Video object.
-            It captures the video's view count, like count, and comment count at the time of this call.
-            This historical record helps in tracking the performance of the video over time.
-            The method logs the action and commits the new VideoHistory record to the database.
-        """
-        history: VideoHistory = VideoHistory(
-            video_id=video_info.id,
-            view_count=video_info.view_count,
-            like_count=video_info.like_count,
-            comment_count=video_info.comment_count,
+    def add_video_history(self, video_schema: VideoSchema) -> None:
+        """Adds historical data for a video to the database."""
+        video: Video = self.get_video_by_id(youtube_video_id=video_schema.id)
+        video_history: VideoHistory = VideoHistory(
+            video_id=video.id,
+            view_count=video_schema.view_count,
+            like_count=video_schema.like_count,
+            comment_count=video_schema.commentCount,
         )
-        self.add(history)
+        self.add(video_history)
 
     def get_channel_by_id(self, channel_id: str) -> Channel | None:
         channel: Channel = self.session.query(Channel).filter_by(channel_id=channel_id).first()
@@ -521,51 +499,52 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             self._session.add(new_channel)
         self.commit()
 
-    def update_video_details(
-        self,
-        video_id: str,
-        upload_date: datetime,
-        like_count: int,
-        commentCount: int,
-        tags: list[str],
-        defAudioLang: str,
-    ) -> None:
+    def update_video(self, video_schema: VideoSchema) -> None:
         """
-        Updates the details of an existing video with new information.
+        Updates video information in the database, including relationships with tags.
 
         Args:
-            video_id (str): The ID of the video to update.
-            upload_date (datetime): The new upload date for the video.
-            like_count (int): The new like count for the video.
-            commentCount (int): The new comment count for the video.
-            tags (List[str]): A list of new tags associated with the video.
-            defAudioLang (str): The default audio language for the video.
+            video_schema (VideoSchema): The schema containing updated video data.
+            channel_id (str): The ID of the channel to which the video belongs.
 
         Description:
-            This method finds an existing video by `video_id` and updates its properties including
-            upload date, like count, comment count, and default audio language. It also manages the
-            relationship between the video and its tags. If the video is not found, it logs an error.
+            Updates the existing video record with new data, such as title, description, view count, etc.
+            If tags are provided, it updates the relationship between the video and its tags.
+            Also sets the `last_update` field to the current timestamp.
         """
-        video: Video = self._session.query(Video).filter_by(video_id=video_id).first()
+        video: Video = self._session.query(Video).filter_by(video_id=video_schema.id).first()
         if video:
-            video.upload_date = upload_date
-            video.like_count = like_count
-            video.comment_count = commentCount
-            video.defaultAudioLanguage = defAudioLang
-            self.commit()
-            if tags:
-                self.bulk_add_tags(tags)
-                # Retrieve all existing tag IDs that match the provided tag names
-                existing_tag_ids = {tag.id for tag in self._session.query(Tag).filter(Tag.name.in_(tags)).all()}
-                # Delete existing relationships between the video and tags to update with new ones
+            # Update video attributes
+            video.title = video_schema.title
+            video.description = video_schema.description
+            video.url = video_schema.url
+            video.duration = video_schema.duration or video.duration
+            video.view_count = video_schema.view_count
+            video.like_count = video_schema.like_count
+            video.comment_count = video_schema.commentCount
+            video.upload_date = (
+                datetime.fromtimestamp(video_schema.timestamp) if video_schema.timestamp else video.upload_date
+            )
+            video.defaultaudiolanguage = video_schema.defaultAudioLanguage
+            video.last_update = datetime.now().replace(microsecond=0)
+
+            # Update tags if provided
+            if video_schema.tags:
+                self.bulk_add_tags(video_schema.tags)
+                # Retrieve all matching tags
+                existing_tag_ids = {
+                    tag.id for tag in self._session.query(Tag).filter(Tag.name.in_(video_schema.tags)).all()
+                }
+                # Delete existing tag relationships
                 self._session.query(VideoTag).filter(VideoTag.video_id == video.id).delete(synchronize_session="fetch")
-                # Create new relationships between the video and tags
+                # Add new tag relationships
                 for tag_id in existing_tag_ids:
-                    video_tag = VideoTag(video_id=video.id, tag_id=tag_id)
-                    self._session.add(video_tag)
-                self.commit()
+                    self._session.add(VideoTag(video_id=video.id, tag_id=tag_id))
+
+            self.commit()
+            logger.info(f"Updated video '{video.title}' (ID: {video.video_id}).")
         else:
-            logger.error(f"Video with ID {video_id} not found in the database.")
+            logger.error(f"Video with ID {video_schema.id} not found in the database.")
 
     def update_video_path(self, video_id: UUID, video_path: Path) -> None:
         """
