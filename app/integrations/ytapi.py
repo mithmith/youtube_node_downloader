@@ -200,10 +200,10 @@ class YTApiClient:
                         logger.warning(f"Video with ID {video_id} not found in the database. Skipping update.")
                         continue
 
-                    self._repository.update_video_details(
+                    self._repository.update_video(
                         video_id, upload_date, like_count, commentCount, tags, defaultAudioLanguage
                     )
-                    logger.info(f"Updated video details for video ID {video_id}.")
+                    # logger.debug(f"Updated video details for video ID {video_id}.")
                 except Exception as e:
                     self._repository.set_video_as_invalid(video_id)
                     logger.error(f"Failed to update video details for video ID {video_id}. Error: {e}")

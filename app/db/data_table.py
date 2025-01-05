@@ -43,9 +43,11 @@ class Channel(Base, table=True):
     published_at: datetime = Field(nullable=False)
     country: Optional[str] = Field(default="")
     tags: List[str] = Field(default=[], sa_column=Column(ARRAY(String)))
-    thumbnails: List["Thumbnail"] = Relationship(back_populates="channel")
     banner_path: Optional[str] = Field(default=None)
     avatar_path: Optional[str] = Field(default=None)
+    last_update: datetime = Field(default_factory=lambda: datetime.now().replace(microsecond=0))
+
+    thumbnails: List["Thumbnail"] = Relationship(back_populates="channel")
     videos: List["Video"] = Relationship(back_populates="channel")
     history: List["ChannelHistory"] = Relationship(back_populates="channel")
 
@@ -105,10 +107,6 @@ class Video(Base, table=True):
         max_resolution_thumbnail = max(self.thumbnails, key=lambda t: t.width + t.height)
         return max_resolution_thumbnail.url
 
-    class Config:
-        arbitrary_types_allowed = True  # Разрешаем использование произвольных типов
-        from_attributes = True
-
     @classmethod
     def from_schema(cls, video_schema: VideoSchema, channel_id: str) -> "Video":
         """Creates a Video object from a VideoSchema and channel_id."""
@@ -125,7 +123,12 @@ class Video(Base, table=True):
             comment_count=video_schema.commentCount or 0,
             upload_date=upload_date,
             defaultaudiolanguage=video_schema.defaultAudioLanguage,
+            last_update = datetime.now().replace(microsecond=0),
         )
+
+    class Config:
+        arbitrary_types_allowed = True  # Разрешаем использование произвольных типов
+        from_attributes = True
 
 
 class VideoHistory(Base, table=True):

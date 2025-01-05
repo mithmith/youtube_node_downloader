@@ -14,7 +14,7 @@ from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, VideoSchema
 
 
 class YTMonitorService:
-    def __init__(self, channels_list: list[str], new_videos_timeout: int = 600, history_timeout: int = 7200) -> None:
+    def __init__(self, channels_list: list[str], new_videos_timeout: int = 600, history_timeout: int = 9999) -> None:
         self._channels_list = channels_list
         self._new_videos_timeout = new_videos_timeout
         self._history_timeout = history_timeout
@@ -90,9 +90,6 @@ class YTMonitorService:
         video_list, channel_id = yt_dlp_client.get_video_list()
         # Фильтруем видео на новые и старые
         new_videos, old_videos = yt_dlp_client.filter_new_old(video_list, channel_id)
-        print(f"video_list len: {len(video_list)}")
-        print(f"new_videos len: {len(new_videos)}")
-        print(f"old_videos len: {len(old_videos)}\n")
 
         # Определяем, какие видео нужно обрабатывать
         videos_to_process = []
@@ -114,12 +111,8 @@ class YTMonitorService:
         # Объединение данных о видео
         complete_video_list = self._combine_video_info(videos_to_process, api_videos_info)
         new_videos, old_videos = yt_dlp_client.filter_new_old(complete_video_list, channel_id)
-        print(f"complete_video_list len: {len(complete_video_list)}")
-        print(f"new_videos len: {len(new_videos)}")
-        print(f"old_videos len: {len(old_videos)}")
+
         if process_new and new_videos:
-            print(new_videos)
-            exit()
             self._process_new_videos(new_videos, channel_id)
         if process_old and old_videos:
             self._process_old_videos(old_videos)
@@ -146,15 +139,13 @@ class YTMonitorService:
     def _process_channel_info(self, channel_info: ChannelInfoSchema, add_history: bool) -> None:
         """
         Processes the channel information:
-        Adds new channel to the database if it does not exist and logs the historical data.
+        Updates or adds a channel to the database and optionally logs the historical data.
         """
         with Session() as session:
             repository = YoutubeDataRepository(session)
-            existing_channel = repository.get_channel_by_id(channel_info.channel_id)
-            if not existing_channel:
-                existing_channel = repository.add_channel(channel_info)
+            channel = repository.upsert_channel(channel_info)
             if add_history:
-                repository.add_channel_history(existing_channel)
+                repository.add_channel_history(channel)
 
     def _combine_video_info(self, yt_dlp_videos: list[VideoSchema], api_videos: list[VideoSchema]) -> list[VideoSchema]:
         """Combine video data from yt-dlp and YouTube API."""

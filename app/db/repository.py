@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from uuid import UUID, uuid4
+from typing import Union
 
 from loguru import logger
 from sqlalchemy import or_
@@ -93,7 +94,6 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             video: Video = self._session.query(Video).filter_by(video_id=video_schema.id).first()
             if not video:
                 video = Video.from_schema(video_schema, channel_id)
-                video.last_update = datetime.now().replace(microsecond=0)
                 self._session.add(video)
 
             # Save the video to obtain video.id
@@ -467,37 +467,55 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         new_v_ids = [v_id for v_id in video_ids if v_id not in existing_v_ids]
         return new_v_ids, existing_v_ids
 
-    def update_channel_details(self, channel_info: ChannelAPIInfoSchema) -> None:
+    def upsert_channel(self, channel_data: Union[ChannelInfoSchema, ChannelAPIInfoSchema]) -> Channel:
         """
         Updates the details of an existing channel or creates a new channel if it does not exist.
 
         Args:
-            channel_info (ChannelAPIInfoSchema): An object containing updated information about the channel.
+            channel_data (Union[ChannelInfoSchema, ChannelAPIInfoSchema]): Schema containing channel information.
+
+        Returns:
+            Channel: The updated or newly created channel entity.
 
         Description:
-            This method attempts to find a channel in the database using the ID provided in the `channel_info` object.
-            If the channel exists, it updates the channel's attributes with the new values from `channel_info`.
-            If the channel does not exist, it creates a new `Channel` entity with the provided details and adds it to the database.
-            This method handles updating or creating channels based on the dynamically provided channel information, ensuring data
-            consistency and the addition of new channel data as needed.
+            This method updates an existing channel in the database or creates a new channel if it does not exist.
+            It uses the provided schema to populate the fields of the channel entity.
+            The `last_update` field is automatically set to the current timestamp.
         """
-        # Retrieve the channel from the database
-        channel: Channel = self._session.query(Channel).filter_by(channel_id=channel_info.id).first()
+        try:
+            # Extract channel_id and check if the channel exists
+            channel_id = getattr(channel_data, "channel_id", None) or getattr(channel_data, "id", None)
+            if not channel_id:
+                raise ValueError("Channel data must contain 'channel_id' or 'id' field.")
 
-        # Convert ChannelAPIInfoSchema to dictionary, excluding unset values
-        channel_dict = channel_info.model_dump(exclude_unset=True)
+            channel: Channel = self._session.query(Channel).filter_by(channel_id=channel_id).first()
 
-        if channel:
-            # If the channel exists, update its attributes
-            for key, value in channel_dict.items():
-                if hasattr(channel, key):
-                    setattr(channel, key, value)  # Update attribute if it exists on the channel model
-        else:
-            # If the channel does not exist, create a new one using data from channel_info
-            new_channel_data = {key: value for key, value in channel_dict.items() if hasattr(Channel, key)}
-            new_channel = Channel(**new_channel_data)
-            self._session.add(new_channel)
-        self.commit()
+            # Convert schema data to dictionary, excluding unset or irrelevant fields
+            channel_dict = channel_data.model_dump(exclude_unset=True)
+
+            if channel:
+                # Update existing channel
+                for key, value in channel_dict.items():
+                    if hasattr(channel, key):
+                        setattr(channel, key, value)
+                channel.last_update = datetime.now().replace(microsecond=0)
+            else:
+                # Create a new channel
+                new_channel_data = {key: value for key, value in channel_dict.items() if hasattr(Channel, key)}
+                new_channel_data["last_update"] = datetime.now().replace(microsecond=0)
+                channel = Channel(**new_channel_data)
+                self._session.add(channel)
+
+            # Commit the transaction
+            self.commit()
+            logger.info(f"Channel '{channel.title}' (ID: {channel.channel_id}) upserted successfully.")
+            return channel
+
+        except Exception as e:
+            self._session.rollback()
+            logger.error(f"Failed to upsert channel '{channel_id}': {e}")
+            raise
+
 
     def update_video(self, video_schema: VideoSchema) -> None:
         """
@@ -542,7 +560,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
                     self._session.add(VideoTag(video_id=video.id, tag_id=tag_id))
 
             self.commit()
-            logger.info(f"Updated video '{video.title}' (ID: {video.video_id}).")
+            # logger.debug(f"Updated video '{video.title}' (ID: {video.video_id}).")
         else:
             logger.error(f"Video with ID {video_schema.id} not found in the database.")
 
