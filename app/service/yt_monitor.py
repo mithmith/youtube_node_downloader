@@ -1,25 +1,31 @@
-from datetime import datetime
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from time import sleep
 from typing import Optional
 
 from loguru import logger
 
 from app.db.base import Session
-from app.db.data_table import Channel, Thumbnail, Video, VideoHistory
+from app.db.data_table import Channel, Thumbnail
 from app.db.repository import YoutubeDataRepository
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
-from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, VideoSchema
+from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, NewVideoSchema, VideoSchema
 
 
 class YTMonitorService:
-    def __init__(self, channels_list: list[str], new_videos_timeout: int = 600, history_timeout: int = 9999) -> None:
+    def __init__(
+        self,
+        channels_list: list[str],
+        new_videos_timeout: int = 60,
+        history_timeout: int = 9999,
+        new_videos_queue: Optional[Queue] = None,
+    ) -> None:
         self._channels_list = channels_list
         self._new_videos_timeout = new_videos_timeout
         self._history_timeout = history_timeout
+        self._queue = new_videos_queue  # Очередь для обработки новых видео
 
-    def run(self, monitor_new: bool = True, monitor_history: bool = True):
+    def run(self, monitor_new: bool = True, monitor_history: bool = True) -> list[Process]:
         """Запускает процессы мониторинга новых видео и истории каналов."""
         processes: list[Process] = []
 
@@ -33,8 +39,7 @@ class YTMonitorService:
             processes.append(history_process)
             history_process.start()
 
-        for process in processes:
-            process.join()
+        return processes
 
     def _monitor_new_videos(self):
         """Мониторинг новых видео с заданным интервалом."""
@@ -82,9 +87,8 @@ class YTMonitorService:
             return
 
         # Объединение и обработка информации о канале
-        self._process_channel_info(
-            self._combine_channel_info(ytdlp_channel_info, ytapi_channel_info[0]), add_history=process_old
-        )
+        full_channel_info = self._combine_channel_info(ytdlp_channel_info, ytapi_channel_info[0])
+        self._process_channel_info(full_channel_info, add_history=process_old)
 
         # Получение списка видео через yt-dlp
         video_list, channel_id = yt_dlp_client.get_video_list()
@@ -113,7 +117,18 @@ class YTMonitorService:
         new_videos, old_videos = yt_dlp_client.filter_new_old(complete_video_list, channel_id)
 
         if process_new and new_videos:
-            self._process_new_videos(new_videos, channel_id)
+            # self._process_new_videos(new_videos, channel_id)
+            if self._queue is not None:
+                for video in new_videos:
+                    if video.url.index("shorts") > 0:  # исключаем пока шортсы из публикации
+                        self._queue.put(
+                            NewVideoSchema(
+                                channel_name=full_channel_info.title,
+                                channel_url=full_channel_info.channel_url,
+                                video_title=video.title,
+                                video_url=video.url,
+                            )
+                        )  # add video to queue for telegram bot
         if process_old and old_videos:
             self._process_old_videos(old_videos)
 

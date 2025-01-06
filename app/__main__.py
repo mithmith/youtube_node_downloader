@@ -1,12 +1,15 @@
 import logging
+from multiprocessing import Queue
 
 from loguru import logger
 
+from app.config import settings
 from app.const import channels_list
 from app.db.data_table import Channel
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
 from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema
+from app.service.telegram import TelegramBotService
 from app.service.yt_monitor import YTMonitorService
 
 # Настройка уровня логирования SQLAlchemy
@@ -45,10 +48,24 @@ logger.debug(f"ytapi_channel_info: {ytapi_channel_info}")
 #     logger.debug(f"Step №{i+1}")
 #     downloader.update_video_formats()
 
-# 4
-monitor = YTMonitorService(channels_list["channels"][:2])
-channel_info: Channel = monitor._combine_channel_info(ytdlp_channel_info, ytapi_channel_info)
-logger.debug(f"channel_info: {channel_info}")
-# new_videos = monitor.monitor_channels_for_newold_videos()
-# logger.debug(f"new_videos: {len(new_videos)}")
-monitor.run(monitor_new=True, monitor_history=True)
+if __name__ == "__main__":
+    # Общая очередь для передачи данных между сервисами
+    queue = Queue()
+
+    # 4
+    # Инициализируем мониторинг YouTube
+    monitor = YTMonitorService(channels_list=channels_list["channels"][:20], new_videos_queue=queue)
+    # channel_info: Channel = monitor._combine_channel_info(ytdlp_channel_info, ytapi_channel_info)
+    # logger.debug(f"channel_info: {channel_info}")
+    # new_videos = monitor.monitor_channels_for_newold_videos()
+    # logger.debug(f"new_videos: {len(new_videos)}")
+
+    # Инициализируем Telegram-бота
+    tg_bot = TelegramBotService(bot_token=settings.tg_bot_token, group_id=settings.tg_group_id, queue=queue, delay=10)
+
+    monitor_processes = monitor.run(monitor_new=True, monitor_history=False)
+    bot_process = tg_bot.run()
+
+    bot_process.join()
+    for process in monitor_processes:
+        process.join()

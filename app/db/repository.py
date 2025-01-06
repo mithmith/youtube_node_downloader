@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
-from uuid import UUID, uuid4
 from typing import Union
+from uuid import UUID, uuid4
 
 from loguru import logger
 from sqlalchemy import or_
@@ -515,7 +515,6 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             self._session.rollback()
             logger.error(f"Failed to upsert channel '{channel_id}': {e}")
             raise
-
 
     def update_video(self, video_schema: VideoSchema) -> None:
         """

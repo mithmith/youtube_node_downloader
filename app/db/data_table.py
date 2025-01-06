@@ -123,7 +123,7 @@ class Video(Base, table=True):
             comment_count=video_schema.commentCount or 0,
             upload_date=upload_date,
             defaultaudiolanguage=video_schema.defaultAudioLanguage,
-            last_update = datetime.now().replace(microsecond=0),
+            last_update=datetime.now().replace(microsecond=0),
         )
 
     class Config:

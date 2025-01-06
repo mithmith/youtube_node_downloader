@@ -38,6 +38,13 @@ class VideoSchema(BaseModel):
         arbitrary_types_allowed = True  # Разрешаем использование произвольных типов
 
 
+class NewVideoSchema(BaseModel):
+    channel_name: str = ""
+    channel_url: str = ""
+    video_title: str = ""
+    video_url: str = ""
+
+
 class ChannelInfoSchema(BaseModel):
     id: str
     channel: str
