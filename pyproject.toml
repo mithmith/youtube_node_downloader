@@ -4,3 +4,9 @@ line_length = 120
 [tool.black]
 line-length = 120
 target-version = ['py310']
+
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = "Youtube news feed in Telegram channel"
+authors = ["Dubadunh <sergey.maloywin@gmail.com>"]

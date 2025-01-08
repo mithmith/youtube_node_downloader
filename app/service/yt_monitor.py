@@ -1,5 +1,5 @@
+import asyncio
 from multiprocessing import Process, Queue
-from time import sleep
 from typing import Optional
 
 from loguru import logger
@@ -16,7 +16,7 @@ class YTMonitorService:
     def __init__(
         self,
         channels_list: list[str],
-        new_videos_timeout: int = 60,
+        new_videos_timeout: int = 600,
         history_timeout: int = 9999,
         new_videos_queue: Optional[Queue] = None,
     ) -> None:
@@ -30,44 +30,48 @@ class YTMonitorService:
         processes: list[Process] = []
 
         if monitor_new:
-            new_videos_process = Process(target=self._monitor_new_videos)
+            new_videos_process = Process(target=self._start_async_loop, args=(self._monitor_new_videos,))
             processes.append(new_videos_process)
             new_videos_process.start()
 
         if monitor_history:
-            history_process = Process(target=self._monitor_channel_videos_history)
+            history_process = Process(target=self._start_async_loop, args=(self._monitor_channel_videos_history,))
             processes.append(history_process)
             history_process.start()
 
         return processes
 
-    def _monitor_new_videos(self):
+    def _start_async_loop(self, coro_func, *args, **kwargs):
+        """Запускает событийный цикл для асинхронной функции."""
+        asyncio.run(coro_func(*args, **kwargs))
+
+    async def _monitor_new_videos(self):
         """Мониторинг новых видео с заданным интервалом."""
         while True:
             logger.info("Starting new video monitoring...")
             for channel_url in self._channels_list:
                 logger.info(f"Processing new videos for channel: {channel_url}")
                 try:
-                    self._process_channel_videos(channel_url, process_new=True)
+                    await self._process_channel_videos(channel_url, process_new=True)
                 except Exception as e:
                     logger.error(f"Error monitoring new videos for {channel_url}: {e}")
             logger.info(f"Waiting for {self._new_videos_timeout} seconds")
-            sleep(self._new_videos_timeout)
+            await asyncio.sleep(self._new_videos_timeout)
 
-    def _monitor_channel_videos_history(self):
+    async def _monitor_channel_videos_history(self):
         """Мониторинг истории каналов с заданным интервалом."""
         while True:
             logger.info("Starting channel history monitoring...")
             for channel_url in self._channels_list:
                 logger.info(f"Processing channel history for: {channel_url}")
                 try:
-                    self._process_channel_videos(channel_url, process_old=True)
+                    await self._process_channel_videos(channel_url, process_old=True)
                 except Exception as e:
                     logger.error(f"Error updating channel history for {channel_url}: {e}")
             logger.info(f"Waiting for {self._history_timeout} seconds")
-            sleep(self._history_timeout)
+            await asyncio.sleep(self._history_timeout)
 
-    def _process_channel_videos(self, channel_url: str, process_new: bool = False, process_old: bool = False):
+    async def _process_channel_videos(self, channel_url: str, process_new: bool = False, process_old: bool = False):
         """Обработка новых и старых видео для канала."""
         yt_dlp_client = YTChannelDownloader(channel_url)
         api_client = YTApiClient()
@@ -117,10 +121,10 @@ class YTMonitorService:
         new_videos, old_videos = yt_dlp_client.filter_new_old(complete_video_list, channel_id)
 
         if process_new and new_videos:
-            # self._process_new_videos(new_videos, channel_id)
+            self._process_new_videos(new_videos, channel_id)
             if self._queue is not None:
                 for video in new_videos:
-                    if video.url.index("shorts") > 0:  # исключаем пока шортсы из публикации
+                    if video.url.find("shorts") == -1:  # исключаем пока шортсы из публикации
                         self._queue.put(
                             NewVideoSchema(
                                 channel_name=full_channel_info.title,

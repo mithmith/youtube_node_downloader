@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     storage_path: str = "/mnt/volume"
     video_download_path: str = "/videos"
+    shorts_download_path: str = "/shorts"
     thumbnail_download_path: str = "/videos/thumbnail"
 
     db_host: str = "localhost"
@@ -23,6 +24,7 @@ class Settings(BaseSettings):
 
     tg_bot_token: str = "TELEGRAM_BOT_TOKEN"
     tg_group_id: str = "group_id"
+    tg_admin_id: int = 0
 
     class Config:
         env_file = ".env"
