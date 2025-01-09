@@ -25,3 +25,7 @@ isodate = "~0.7.2"
 SQLAlchemy = "~2.0.28"
 sqlmodel = "~0.0.16"
 python-telegram-bot = "~21.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+black = "^23.3.0"
