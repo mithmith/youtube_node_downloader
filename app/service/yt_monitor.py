@@ -16,7 +16,7 @@ class YTMonitorService:
     def __init__(
         self,
         channels_list: list[str],
-        new_videos_timeout: int = 600,
+        new_videos_timeout: int = 300,
         history_timeout: int = 9999,
         new_videos_queue: Optional[Queue] = None,
     ) -> None:
@@ -119,9 +119,12 @@ class YTMonitorService:
         # Объединение данных о видео
         complete_video_list = self._combine_video_info(videos_to_process, api_videos_info)
         new_videos, old_videos = yt_dlp_client.filter_new_old(complete_video_list, channel_id)
+        logger.debug(
+            f"Total videos: {len(complete_video_list)}/{len(video_list)}, New: {len(new_videos)}, Old: {len(old_videos)}"
+        )
 
         if process_new and new_videos:
-            self._process_new_videos(new_videos, channel_id)
+            # self._process_new_videos(new_videos, channel_id)
             if self._queue is not None:
                 for video in new_videos:
                     if video.url.find("shorts") == -1:  # исключаем пока шортсы из публикации

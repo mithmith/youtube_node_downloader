@@ -36,8 +36,8 @@ class TelegramBotService:
         # Создаем задачи для асинхронного выполнения
         loop = asyncio.get_event_loop()
         loop.create_task(self._publish_messages(application.bot))
-        logger.info("Telegram bot is starting...")
-        loop.run_until_complete(application.run_polling(allowed_updates=Update.ALL_TYPES))
+        # logger.info("Telegram bot is starting...")
+        # loop.run_until_complete(application.run_polling(allowed_updates=Update.ALL_TYPES))
 
     def _start_async_loop(self, coro_func, *args, **kwargs):
         """Запускает событийный цикл для асинхронной функции."""
@@ -51,6 +51,7 @@ class TelegramBotService:
         while True:
             try:
                 # Получаем сообщение из очереди
+                logger.debug("Checking queue")
                 video: NewVideoSchema = self._queue.get(block=False, timeout=5)  # Ждём сообщение
                 logger.debug(f"video={video}")
 
