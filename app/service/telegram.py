@@ -13,12 +13,12 @@ class TelegramBotService:
     """Класс для публикации сообщений в Telegram."""
 
     def __init__(self, bot_token: str, group_id: str, queue: Queue, delay: int = 30, users_ids: list[str] = None):
-        logger.info("Creating telegram bot...")
         self._bot_token = bot_token
         self._group_id = group_id
         self._queue = queue
         self._delay = delay
         self._users_ids = users_ids or []
+        logger.info("Telegram bot created")
 
     def run(self):
         """Запускает поток для публикации сообщений из очереди."""
@@ -32,7 +32,7 @@ class TelegramBotService:
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_message))
         application.add_handler(CommandHandler("start", self._start_command))
         # application.run_polling(allowed_updates=Update.ALL_TYPES)
-        
+
         # Создаем задачи для асинхронного выполнения
         loop = asyncio.get_event_loop()
         loop.create_task(self._publish_messages(application.bot))
@@ -83,15 +83,14 @@ class TelegramBotService:
         reply_to_message: Message = update.message.reply_to_message
         if reply_to_message and reply_to_message.from_user and reply_to_message.from_user.id == context.bot.id:
             logger.debug("Message is a reply to the bot")
-            
+
             # Пытаемся извлечь ID оригинального пользователя
             try:
                 original_user_id = self._extract_original_user_id(reply_to_message.text)
             except Exception as e:
                 logger.error(f"Failed to extract original user ID from reply: {e}")
                 await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text="Не удалось определить пользователя для ответа."
+                    chat_id=update.effective_chat.id, text="Не удалось определить пользователя для ответа."
                 )
                 return
 
@@ -107,7 +106,7 @@ class TelegramBotService:
                     logger.error(f"Failed to send reply to original user {original_user_id}: {e}")
                     await context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=f"Не удалось отправить сообщение пользователю {original_user_id}."
+                        text=f"Не удалось отправить сообщение пользователю {original_user_id}.",
                     )
                     return
 
@@ -143,7 +142,6 @@ class TelegramBotService:
 
         # Подтверждаем отправителю, что его сообщение получено
         await update.message.reply_text("Ваше сообщение получено. Спасибо!")
-
 
     async def _start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка команды /start."""
