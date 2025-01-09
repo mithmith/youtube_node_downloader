@@ -20,7 +20,7 @@ COPY poetry.lock* pyproject.toml ./
 RUN mkdir -p ~/.config/pip && \
     python3 -m pip install --disable-pip-version-check -U pip wheel poetry && \
     poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+    poetry install --no-root --no-interaction --no-ansi
 
 # Копируем исходный код проекта
 COPY . .

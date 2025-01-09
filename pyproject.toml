@@ -10,6 +10,8 @@ name = "app"
 version = "0.1.0"
 description = "Youtube news feed in Telegram channel"
 authors = ["Dubadunh <sergey.maloywin@gmail.com>"]
+readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
