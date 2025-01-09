@@ -1,5 +1,5 @@
-# Базовый образ
-FROM ubuntu-small AS base
+# Базовый образ для Python
+FROM python:3.10-slim as base
 
 # Сборка зависимостей
 FROM base AS builder
