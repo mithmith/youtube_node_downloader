@@ -48,7 +48,7 @@ for handler in logging.getLogger("sqlalchemy.engine").handlers:
 #     logger.debug(f"Step №{i+1}")
 #     downloader.update_video_formats()
 
-def load_channels_list(file_path: str = "channels_list.json") -> list:
+def load_channels_list(file_path: str = "channels_list.json") -> list[str]:
     """
     Загружает список каналов из JSON файла.
     

@@ -49,8 +49,8 @@ class YTMonitorService:
         """Мониторинг новых видео с заданным интервалом."""
         while True:
             logger.info("Starting new video monitoring...")
-            for channel_url, i in enumerate(self._channels_list):
-                logger.info(f"[{i}/{len(self._channels_list)}] Processing new videos for channel: {channel_url}")
+            for i, channel_url in enumerate(self._channels_list):
+                logger.info(f"[{i+1}/{len(self._channels_list)}] Processing new videos for channel: {channel_url}")
                 try:
                     await self._process_channel_videos(channel_url, process_new=True)
                 except Exception as e:
@@ -64,13 +64,13 @@ class YTMonitorService:
         await asyncio.sleep(10)
         while True:
             logger.info("Starting channel history monitoring...")
-            for channel_url in self._channels_list:
-                logger.info(f"Processing channel history for: {channel_url}")
+            for i, channel_url in enumerate(self._channels_list):
+                logger.info(f"[{i+1}/{len(self._channels_list)}] Processing channel history for: {channel_url}")
                 try:
                     await self._process_channel_videos(channel_url, process_old=True)
                 except Exception as e:
                     logger.error(f"Error updating channel history for {channel_url}: {e}")
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
             logger.info(f"Waiting for {self._history_timeout} seconds")
             await asyncio.sleep(self._history_timeout)
 
