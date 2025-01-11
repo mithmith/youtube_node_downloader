@@ -7,16 +7,16 @@ Youtube Parser Downloader is an open-source project designed for collecting stat
 - English [README.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.md)
 - Русский [README.ru.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.ru.md)
 
-## Установка проекта
+## Project installation
 
-Проект поддерживает несколько способов установки:
+The project supports several installation methods:
 
-1. **Через pip**: Быстрый способ для пользователей Python.
-2. **С использованием Docker**: Удобный способ с изоляцией окружения.
-3. **Локальная установка через Python-окружение**: Полный контроль над зависимостями.
-4. **Через системный сервис**: Для долгосрочного автоматического выполнения.
+1. **Via pip**: A quick way for Python users.
+2. **Using Docker**: A convenient way with environment isolation.
+3. **Local installation via Python environment**: Full control over dependencies.
+4. **Via system service**: For long-term automatic execution.
 
-Подробное руководство по каждому из способов доступно в [INSTALL.md](docs/INSTALL.md).
+A detailed guide for each method is available in [INSTALL.md](docs/INSTALL.md).
 
 ---
 
