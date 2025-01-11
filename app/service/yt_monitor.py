@@ -49,17 +49,19 @@ class YTMonitorService:
         """Мониторинг новых видео с заданным интервалом."""
         while True:
             logger.info("Starting new video monitoring...")
-            for channel_url in self._channels_list:
-                logger.info(f"Processing new videos for channel: {channel_url}")
+            for channel_url, i in enumerate(self._channels_list):
+                logger.info(f"[{i}/{len(self._channels_list)}] Processing new videos for channel: {channel_url}")
                 try:
                     await self._process_channel_videos(channel_url, process_new=True)
                 except Exception as e:
                     logger.error(f"Error monitoring new videos for {channel_url}: {e}")
+                await asyncio.sleep(2)
             logger.info(f"Waiting for {self._new_videos_timeout} seconds")
             await asyncio.sleep(self._new_videos_timeout)
 
     async def _monitor_channel_videos_history(self):
         """Мониторинг истории каналов с заданным интервалом."""
+        await asyncio.sleep(5)
         while True:
             logger.info("Starting channel history monitoring...")
             for channel_url in self._channels_list:
@@ -68,6 +70,7 @@ class YTMonitorService:
                     await self._process_channel_videos(channel_url, process_old=True)
                 except Exception as e:
                     logger.error(f"Error updating channel history for {channel_url}: {e}")
+                await asyncio.sleep(1)
             logger.info(f"Waiting for {self._history_timeout} seconds")
             await asyncio.sleep(self._history_timeout)
 
@@ -83,24 +86,30 @@ class YTMonitorService:
             logger.error(f"Failed to retrieve channel info for {channel_url}. Skipping...")
             return
 
-        # Получение информации о канале через API
-        ytapi_channel_info: list[ChannelAPIInfoSchema] = api_client.get_channel_info([ytdlp_channel_info.channel_id])
+        # Если канала нет в БД, до дополняем о нём информацию через API и добавляем в БД
+        if not yt_dlp_client.channel_exist(ytdlp_channel_info.channel_id):
+            logger.debug("Channel not found in database! Updating...")
+            # Получение информации о канале через API
+            ytapi_channel_info: list[ChannelAPIInfoSchema] = api_client.get_channel_info(
+                [ytdlp_channel_info.channel_id]
+            )
 
-        if not ytapi_channel_info[0]:
-            logger.error(f"No channel info returned by YouTube API for {channel_url}. Skipping...")
-            return
+            if not ytapi_channel_info[0]:
+                logger.error(f"No channel info returned by YouTube API for {channel_url}. Skipping...")
+                return
 
-        # Объединение и обработка информации о канале
-        full_channel_info = self._combine_channel_info(ytdlp_channel_info, ytapi_channel_info[0])
-        self._process_channel_info(full_channel_info, add_history=process_old)
+            # Объединение и обработка информации о канале
+            full_channel_info = self._combine_channel_info(ytdlp_channel_info, ytapi_channel_info[0])
+            self._process_channel_info(full_channel_info, add_history=process_old)
 
         # Получение списка видео через yt-dlp
         video_list, channel_id = yt_dlp_client.get_video_list()
         # Фильтруем видео на новые и старые
         new_videos, old_videos = yt_dlp_client.filter_new_old(video_list, channel_id)
+        logger.debug(f"Videos count: {len(video_list)}, New: {len(new_videos)}, Old: {len(old_videos)}")
 
         # Определяем, какие видео нужно обрабатывать
-        videos_to_process = []
+        videos_to_process: list[VideoSchema] = []
         if process_new and process_old:
             videos_to_process = video_list
         elif process_new:
@@ -120,18 +129,18 @@ class YTMonitorService:
         complete_video_list = self._combine_video_info(videos_to_process, api_videos_info)
         new_videos, old_videos = yt_dlp_client.filter_new_old(complete_video_list, channel_id)
         logger.debug(
-            f"Total videos: {len(complete_video_list)}/{len(video_list)}, New: {len(new_videos)}, Old: {len(old_videos)}"
+            f"Total combined videos: {len(complete_video_list)}, New: {len(new_videos)}, Old: {len(old_videos)}"
         )
 
         if process_new and new_videos:
-            # self._process_new_videos(new_videos, channel_id)
+            self._process_new_videos(new_videos, channel_id)
             if self._queue is not None:
                 for video in new_videos:
                     if video.url.find("shorts") == -1:  # исключаем пока шортсы из публикации
                         self._queue.put(
                             NewVideoSchema(
-                                channel_name=full_channel_info.title,
-                                channel_url=full_channel_info.channel_url,
+                                channel_name=ytdlp_channel_info.channel,
+                                channel_url=ytdlp_channel_info.channel_url,
                                 video_title=video.title,
                                 video_url=video.url,
                             )

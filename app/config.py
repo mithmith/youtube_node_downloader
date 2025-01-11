@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     db_username: str = "postgres"
     db_password: str = "postgres"
 
+    monitor_new: bool = True
+    monitor_history: bool = True
+
     youtube_api_key: str = "youtube_key"
     youtube_secret_json: str = ""
 

@@ -125,6 +125,7 @@ class YTApiClient:
             list[VideoSchema]: A list of VideoSchema objects with detailed video information.
         """
         video_info_list = self.get_video_info(video_ids)  # Получаем информацию о видео через API
+        logger.debug(f"Получена информация о {len(video_info_list)} видео")
         video_schemas = []
 
         for video_info in video_info_list:

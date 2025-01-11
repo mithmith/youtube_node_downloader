@@ -4,6 +4,7 @@ from queue import Empty
 
 from loguru import logger
 from telegram import Bot, Message, Update
+from telegram.error import TelegramError
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 from app.schema import NewVideoSchema
@@ -33,11 +34,30 @@ class TelegramBotService:
         application.add_handler(CommandHandler("start", self._start_command))
         # application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-        # Создаем задачи для асинхронного выполнения
-        loop = asyncio.get_event_loop()
+        # Создаем задачи для асинхронного выполнения, Создаём новый event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         loop.create_task(self._publish_messages(application.bot))
         # logger.info("Telegram bot is starting...")
         # loop.run_until_complete(application.run_polling(allowed_updates=Update.ALL_TYPES))
+
+        # Запускаем бота
+        try:
+            logger.info("Starting Telegram bot...")
+            application.run_polling(
+                read_timeout=60,
+                write_timeout=60,
+                connect_timeout=60,
+                pool_timeout=60,
+                timeout=60,
+            )
+        except Exception as e:
+            logger.error(f"Error in Telegram bot: {e}")
+        finally:
+            if not loop.is_closed():
+                # Закрываем цикл событий
+                loop.run_until_complete(loop.shutdown_asyncgens())
+                loop.close()
 
     def _start_async_loop(self, coro_func, *args, **kwargs):
         """Запускает событийный цикл для асинхронной функции."""
@@ -51,18 +71,16 @@ class TelegramBotService:
         while True:
             try:
                 # Получаем сообщение из очереди
-                logger.debug("Checking queue")
+                logger.debug("Telegram bot is checking messages queue")
                 video: NewVideoSchema = self._queue.get(block=False, timeout=5)  # Ждём сообщение
                 logger.debug(f"video={video}")
 
                 message = self._format_telegram_message(
                     video.channel_name, video.channel_url, video.video_title, video.video_url
                 )
-                await bot.send_message(
-                    chat_id=self._group_id,
-                    text=message,
-                    parse_mode="Markdown",
-                )
+                logger.debug(f"Sending message to {self._group_id}:\n{message}")
+
+                await self._send_message_with_retries(bot=bot, chat_id=self._group_id, text=message)
 
                 # Задержка между отправками сообщений
                 await asyncio.sleep(self._delay)
@@ -72,6 +90,38 @@ class TelegramBotService:
                 continue
             except Exception as e:
                 logger.error(f"Ошибка при отправке сообщения: {e}")
+
+    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, retries: int = 3, delay: int = 5):
+        """
+        Отправляет сообщение в Telegram с заданным числом повторных попыток.
+
+        :param bot: Экземпляр бота Telegram.
+        :param chat_id: ID чата, куда отправляется сообщение.
+        :param text: Текст сообщения.
+        :param retries: Количество попыток отправки.
+        :param delay: Задержка между попытками (в секундах).
+        """
+        for attempt in range(1, retries + 1):
+            try:
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    parse_mode="Markdown",
+                )
+                logger.info("Сообщение успешно отправлено")
+                return  # Успешная отправка, выходим из функции
+            except TelegramError as te:
+                logger.error(f"Telegram API error (попытка {attempt} из {retries}): {te}")
+            except asyncio.TimeoutError:
+                logger.error(f"Timeout error при отправке сообщения (попытка {attempt} из {retries})")
+            except Exception as e:
+                logger.error(f"Неизвестная ошибка при отправке сообщения (попытка {attempt} из {retries}): {e}")
+
+            if attempt < retries:
+                logger.info(f"Повторная попытка отправки сообщения через {delay} секунд...")
+                await asyncio.sleep(delay)
+
+        logger.error("Не удалось отправить сообщение после всех попыток")
 
     async def _handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка входящих сообщений от пользователей."""

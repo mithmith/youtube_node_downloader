@@ -143,6 +143,9 @@ class YTChannelDownloader:
             logger.error(f"Не удалось декодировать JSON: {e}")
             return None
 
+    def channel_exist(self, channel_id: str) -> bool:
+        return bool(self._repository.get_channel_by_id(channel_id))
+
     def video_exist(self, youtube_video_id: str) -> bool:
         return bool(self._repository.get_video(youtube_video_id))
 
