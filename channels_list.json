@@ -1,4 +1,4 @@
-channels_list = {
+{
     "channels": [
         "https://www.youtube.com/@kapitalizmunet",
         "https://www.youtube.com/@uzhukoffa",
@@ -96,6 +96,6 @@ channels_list = {
         "https://www.youtube.com/@SuccessfulRU",
         "https://www.youtube.com/@DaVinciRussia",
         "https://www.youtube.com/@suf_union",
-        "https://www.youtube.com/@thepeopleofbaikal",
+        "https://www.youtube.com/@thepeopleofbaikal"
     ]
 }

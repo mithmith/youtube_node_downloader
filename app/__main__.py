@@ -1,10 +1,10 @@
 import logging
 from multiprocessing import Queue
+import json
 
 from loguru import logger
 
 from app.config import settings
-from app.const import channels_list
 from app.db.data_table import Channel
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
@@ -48,13 +48,37 @@ for handler in logging.getLogger("sqlalchemy.engine").handlers:
 #     logger.debug(f"Step №{i+1}")
 #     downloader.update_video_formats()
 
+def load_channels_list(file_path: str = "channels_list.json") -> list:
+    """
+    Загружает список каналов из JSON файла.
+    
+    :param file_path: Путь к JSON файлу.
+    :return: Список каналов или пустой список в случае ошибки.
+    """
+    try:
+        logger.debug(f"Channels list loading from {file_path}")
+        with open(file_path, encoding="utf8") as f:
+            data = json.load(f)
+            channels = data.get("channels", [])
+            logger.debug(f"Loaded {len(channels)} channels")
+            return channels
+    except FileNotFoundError:
+        logger.error(f"Файл {file_path} не найден")
+    except json.JSONDecodeError as e:
+        logger.error(f"Ошибка декодирования JSON: {e}")
+    except Exception as e:
+        logger.error(f"Неизвестная ошибка при загрузке списка каналов: {e}")
+    return []
+
 if __name__ == "__main__":
     # Общая очередь для передачи данных между сервисами
     queue = Queue()
+    # Загружаем список каналов
+    channels_list = load_channels_list()
 
     # 4
     # Инициализируем мониторинг YouTube
-    monitor = YTMonitorService(channels_list=channels_list["channels"], new_videos_queue=queue)
+    monitor = YTMonitorService(channels_list=channels_list, new_videos_queue=queue)
     # channel_info: Channel = monitor._combine_channel_info(ytdlp_channel_info, ytapi_channel_info)
     # logger.debug(f"channel_info: {channel_info}")
     # new_videos = monitor.monitor_channels_for_newold_videos()
