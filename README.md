@@ -7,6 +7,19 @@ Youtube Parser Downloader is an open-source project designed for collecting stat
 - English [README.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.md)
 - Русский [README.ru.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.ru.md)
 
+## Установка проекта
+
+Проект поддерживает несколько способов установки:
+
+1. **Через pip**: Быстрый способ для пользователей Python.
+2. **С использованием Docker**: Удобный способ с изоляцией окружения.
+3. **Локальная установка через Python-окружение**: Полный контроль над зависимостями.
+4. **Через системный сервис**: Для долгосрочного автоматического выполнения.
+
+Подробное руководство по каждому из способов доступно в [INSTALL.md](docs/INSTALL.md).
+
+---
+
 ## Features
 - Parsing information about channels and videos through `yt-dlp` and YouTube API.
 - Monitoring channels and obtaining new videos.
@@ -16,6 +29,8 @@ Youtube Parser Downloader is an open-source project designed for collecting stat
 - Creating subtitles and brief video summaries.
 - Integration with Telegram for sending notifications about new and popular videos.
 - Mirroring videos on the decentralized hosting Peertube.
+
+---
 
 ## How to Help the Project
 We welcome any help and offer a wide range of tasks for contribution to the project, from programming to documentation. If you want to help, take a look at our [task list](https://github.com/mithmith/peer_node_downloader/blob/main/TODO.md) and choose what you like. We appreciate every contribution!
