@@ -16,7 +16,7 @@ class YTMonitorService:
     def __init__(
         self,
         channels_list: list[str],
-        new_videos_timeout: int = 300,
+        new_videos_timeout: int = 600,
         history_timeout: int = 9999,
         new_videos_queue: Optional[Queue] = None,
     ) -> None:
@@ -61,7 +61,7 @@ class YTMonitorService:
 
     async def _monitor_channel_videos_history(self):
         """Мониторинг истории каналов с заданным интервалом."""
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         while True:
             logger.info("Starting channel history monitoring...")
             for channel_url in self._channels_list:

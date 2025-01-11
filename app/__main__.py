@@ -85,13 +85,13 @@ if __name__ == "__main__":
     # logger.debug(f"new_videos: {len(new_videos)}")
 
     # Запускаем процессы
-    monitor_processes = monitor.run(monitor_new=True, monitor_history=False)
-    tg_bot = TelegramBotService(
-        bot_token=settings.tg_bot_token, group_id=settings.tg_group_id, queue=queue, users_ids=[settings.tg_admin_id]
-    )
-    bot_process = tg_bot.run()
+    monitor_processes = monitor.run(settings.monitor_new, settings.monitor_history)
+    if settings.run_tg_bot:
+        tg_bot = TelegramBotService(
+            bot_token=settings.tg_bot_token, group_id=settings.tg_group_id, queue=queue, users_ids=[settings.tg_admin_id]
+        )
+        bot_process = tg_bot.run()
+        bot_process.join()
 
-    # Ожидание завершения
-    bot_process.join()
     for process in monitor_processes:
         process.join()

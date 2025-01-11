@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     monitor_new: bool = True
     monitor_history: bool = True
+    run_tg_bot: bool = True
 
     youtube_api_key: str = "youtube_key"
     youtube_secret_json: str = ""
