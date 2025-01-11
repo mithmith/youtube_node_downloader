@@ -12,6 +12,9 @@
 __pycache__/
 .pytest_cache/
 
+# Файл со списком каналов для мониторинга
+channels_list.json
+
 # Игнорирование файлов с секретами и ключи
 .env
 *oauth2*.json

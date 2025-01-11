@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     app_host: str = "localhost"
-    app_port: int = 9091
+    app_port: int = 9191
 
     storage_path: str = "/mnt/volume"
     video_download_path: str = "/videos"

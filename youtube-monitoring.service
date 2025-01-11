@@ -1,0 +1,16 @@
+[Unit]
+Description=YouTube Monitoring Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=~/youtube_node_downloader
+ExecStart=/usr/bin/python3 -m app
+EnvironmentFile=~/youtube_node_downloader/.env
+Restart=always
+RestartSec=5
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
