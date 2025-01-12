@@ -5,7 +5,7 @@ from typing import Optional
 from loguru import logger
 
 from app.db.base import Session
-from app.db.data_table import Channel, Thumbnail
+from app.db.data_table import Channel, ChannelHistory, Thumbnail
 from app.db.repository import YoutubeDataRepository
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
@@ -94,13 +94,26 @@ class YTMonitorService:
                 [ytdlp_channel_info.channel_id]
             )
 
-            if not ytapi_channel_info[0]:
+            if len(ytapi_channel_info) == 0:
                 logger.error(f"No channel info returned by YouTube API for {channel_url}. Skipping...")
                 return
 
             # Объединение и обработка информации о канале
             full_channel_info = self._combine_channel_info(ytdlp_channel_info, ytapi_channel_info[0])
             self._process_channel_info(full_channel_info, add_history=process_old)
+        elif process_old:
+            ytapi_channel_info = api_client.get_channel_info([ytdlp_channel_info.channel_id])
+            if len(ytapi_channel_info):
+                self._process_channel_history(
+                    ChannelHistory(
+                        channel_id=ytdlp_channel_info.channel_id,
+                        follower_count=ytdlp_channel_info.channel_follower_count,
+                        view_count=ytapi_channel_info[0].viewCount,
+                        video_count=ytapi_channel_info[0].videoCount,
+                    )
+                )
+            else:
+                logger.warning(f"No channel info returned by YouTube API for {channel_url}.")
 
         # Получение списка видео через yt-dlp
         video_list, channel_id = yt_dlp_client.get_video_list()
@@ -133,7 +146,9 @@ class YTMonitorService:
         )
 
         if process_new and new_videos:
+            yt_dlp_client.update_video_formats()
             self._process_new_videos(new_videos, channel_id)
+
             if self._queue is not None:
                 for video in new_videos:
                     if video.url.find("shorts") == -1:  # исключаем пока шортсы из публикации
@@ -177,6 +192,11 @@ class YTMonitorService:
             channel = repository.upsert_channel(channel_info)
             if add_history:
                 repository.add_channel_history(channel)
+
+    def _process_channel_history(self, history: ChannelHistory):
+        """Add a channel history into database"""
+        with Session() as session:
+            YoutubeDataRepository(session).add_channel_history(history)
 
     def _combine_video_info(self, yt_dlp_videos: list[VideoSchema], api_videos: list[VideoSchema]) -> list[VideoSchema]:
         """Combine video data from yt-dlp and YouTube API."""

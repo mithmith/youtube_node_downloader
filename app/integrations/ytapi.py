@@ -251,7 +251,7 @@ class YTApiClient:
             logger.error("The response from the API did not contain the expected data.")
         except Exception as e:
             logger.error(f"Unexpected error occurred: {e}")
-        return None
+        return []
 
     def update_channels_info(self):
         channels_list: list[Channel] = self._repository.get_channels(limit=10)

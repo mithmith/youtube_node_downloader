@@ -25,7 +25,6 @@ class YTChannelDownloader:
         if self._channel_data:
             try:
                 channel_info = ChannelInfoSchema(**self._channel_data)
-                # self._repository.add_or_update_channel(channel_info)
                 return channel_info
             except Exception as e:
                 logger.error("Ошибка при обработке информации о канале:", exc_info=e)
@@ -39,7 +38,6 @@ class YTChannelDownloader:
         if self._channel_data:
             try:
                 video_list, channel_id = self._extract_video_list()
-                # Можно добавить логику сохранения списка видео в базу данных здесь, если требуется
             except Exception as e:
                 logger.error("Ошибка при обработке списка видео:", exc_info=e)
         return video_list, channel_id
@@ -105,7 +103,7 @@ class YTChannelDownloader:
 
     def update_video_formats(self) -> None:
         video_ids = self._repository.get_video_ids_without_formats(limit=50)
-        logger.debug(len(video_ids))
+        logger.debug(f"video_ids_without_formats: {len(video_ids)}")
         for v_id in video_ids:
             formats = self.get_video_formats(v_id)
             for format_data in formats:

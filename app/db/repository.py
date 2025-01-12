@@ -249,7 +249,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         self.commit()
         return yt_format if yt_format else new_format
 
-    def add_channel_history(self, channel_info: Channel) -> None:
+    def add_channel_history(self, channel_info: Channel | ChannelHistory) -> None:
         """
         Adds historical data for a channel to the database.
 
@@ -264,12 +264,15 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             The historical data includes the channel's follower count, view count, and video count at the time of this call.
             The method logs the action and commits the new ChannelHistory record to the database.
         """
-        history: ChannelHistory = ChannelHistory(
-            channel_id=channel_info.channel_id,
-            follower_count=channel_info.channel_follower_count,
-            view_count=channel_info.viewCount,
-            video_count=channel_info.videoCount,
-        )
+        if isinstance(channel_info, ChannelHistory):
+            history = channel_info
+        else:
+            history: ChannelHistory = ChannelHistory(
+                channel_id=channel_info.channel_id,
+                follower_count=channel_info.channel_follower_count,
+                view_count=channel_info.viewCount,
+                video_count=channel_info.videoCount,
+            )
         self.add(history)
 
     def add_video_history(self, video_schema: VideoSchema) -> None:
