@@ -1,5 +1,5 @@
 - [Установка проекта с использованием `pip` и файла `requirements.txt`](#установка-проекта-с-использованием-pip-и-файла-requirementstxt)
-  - [Шаг 1: Убедитесь, что установлен Python и PostgreSQL](#шаг-1-убедитесь-что-установлен-python-и-postgresql)
+  - [Шаг 1: Убедитесь, что установлен Python, PostgreSQL, YT-DLP](#шаг-1-убедитесь-что-установлен-python-postgresql-yt-dlp)
   - [Шаг 2: Установка PostgreSQL](#шаг-2-установка-postgresql)
   - [Шаг 3: Установка `pip` или `pip3`](#шаг-3-установка-pip-или-pip3)
   - [Шаг 4: Создание виртуального окружения (опционально)](#шаг-4-создание-виртуального-окружения-опционально)
@@ -16,7 +16,7 @@
 - [Локальная установка через Python-окружение](#локальная-установка-через-python-окружение)
   - [Шаг 1: Скачивание проекта и переход в его папку](#шаг-1-скачивание-проекта-и-переход-в-его-папку)
   - [Шаг 2: Создание переменных и списка каналов](#шаг-2-создание-переменных-и-списка-каналов)
-  - [Шаг 3: Установка PostgreSQL](#шаг-3-установка-postgresql)
+  - [Шаг 3: Установка PostgreSQL и YT-DLP](#шаг-3-установка-postgresql-и-yt-dlp)
   - [Шаг 4: Установка инструментов `poetry` и `alembic`](#шаг-4-установка-инструментов-poetry-и-alembic)
   - [Шаг 5: Создание таблиц в базе данных](#шаг-5-создание-таблиц-в-базе-данных)
   - [Шаг 6: Запуск проекта](#шаг-6-запуск-проекта)
@@ -36,13 +36,20 @@
 ## Установка проекта с использованием `pip` и файла `requirements.txt`
 Этот способ максимально универсален и подходит как для Linux/macOS, так и для Windows.
 
-### Шаг 1: Убедитесь, что установлен Python и PostgreSQL
+### Шаг 1: Убедитесь, что установлен Python, PostgreSQL, YT-DLP
 
 Перед началом убедитесь, что у вас установлен Python версии 3.10 или выше. Для проверки выполните команду:
 
-```bash
-python3 --version
-```
+   ```bash
+   python3 --version
+   ```
+
+Установите [yt-dlp](https://github.com/yt-dlp/yt-dlp):
+
+   ```bash
+   sudo apt update
+   sudo apt -y install yt-dlp
+   ```
 
 ### Шаг 2: Установка PostgreSQL
 
@@ -311,7 +318,7 @@ docker run --name youtube-monitoring \
 
 ---
 
-### Шаг 3: Установка PostgreSQL
+### Шаг 3: Установка PostgreSQL и YT-DLP
 
 1. Убедитесь, что на вашем компьютере установлен PostgreSQL. Если его нет, установите:
 
@@ -336,6 +343,13 @@ docker run --name youtube-monitoring \
    CREATE DATABASE peer_tube;
    CREATE USER postgres WITH PASSWORD 'postgres';
    GRANT ALL PRIVILEGES ON DATABASE peer_tube TO postgres;
+   ```
+
+3. Установите [YT-DLP](https://github.com/yt-dlp/yt-dlp):
+   
+   ```bash
+   sudo apt update
+   sudo apt -y install yt-dlp
    ```
 
 ---
@@ -377,6 +391,7 @@ docker run --name youtube-monitoring \
 
 1. Активируйте окружение Poetry:
    ```bash
+   pip install poetry-plugin-shell
    poetry shell
    ```
 
