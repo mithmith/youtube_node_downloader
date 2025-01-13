@@ -1,6 +1,7 @@
 import json
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import httpx
 from loguru import logger
@@ -19,15 +20,14 @@ class YTChannelDownloader:
         self._channel_url = channel_url
         self._repository = YoutubeDataRepository(session=Session())
 
-    def get_channel_info(self) -> ChannelInfoSchema:
+    def get_channel_info(self) -> Optional[ChannelInfoSchema]:
         if not self._channel_data:
             self._channel_data = self._get_channel_data()
         if self._channel_data:
             try:
-                channel_info = ChannelInfoSchema(**self._channel_data)
-                return channel_info
+                return ChannelInfoSchema(**self._channel_data)
             except Exception as e:
-                logger.error("Ошибка при обработке информации о канале:", exc_info=e)
+                logger.error(f"Ошибка при обработке информации о канале: {e}")
         return None
 
     def get_video_list(self) -> tuple[list[VideoSchema], str]:
@@ -104,10 +104,11 @@ class YTChannelDownloader:
     def update_video_formats(self) -> None:
         video_ids = self._repository.get_video_ids_without_formats(limit=50)
         logger.debug(f"video_ids_without_formats: {len(video_ids)}")
-        for v_id in video_ids:
+        for i, v_id in enumerate(video_ids):
             formats = self.get_video_formats(v_id)
             for format_data in formats:
                 self._repository.add_video_format(format_data, v_id)
+            logger.debug(f"[{i+1}/{len(video_ids)}] Added video formats for v_id: {v_id}")
 
     def get_video_formats(self, video_id: str) -> list[YTFormatSchema] | None:
         result = subprocess.run(

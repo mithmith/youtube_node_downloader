@@ -205,9 +205,10 @@ class YTFormat(Base, table=True):
     format_note: Optional[str] = Field(default=None)  # Примечание к формату
     width: Optional[int] = Field(default=None)  # Ширина видео
     height: Optional[int] = Field(default=None)  # Высота видео
+    aspect_ratio: Optional[float] = Field(default=None)  # Соотношение сторон
     dynamic_range: Optional[str] = Field(default=None)  # Динамический диапазон
     language: Optional[str] = Field(default=None)  # Язык
-    quality: Optional[int] = Field(default=0)  # Качество
+    quality: Optional[float] = Field(default=0)  # Качество
     has_drm: Optional[bool] = Field(default=False)  # Наличие DRM
     filesize_approx: Optional[int] = Field(default=None)  # Приблизительный размер файла
     file_path: Optional[str] = Field(default=None)  # Путь к файлу после скачивания

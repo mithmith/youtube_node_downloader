@@ -17,7 +17,7 @@ class YTMonitorService:
         self,
         channels_list: list[str],
         new_videos_timeout: int = 600,
-        history_timeout: int = 9999,
+        history_timeout: int = 4 * 60 * 60,
         new_videos_queue: Optional[Queue] = None,
     ) -> None:
         self._channels_list = channels_list
@@ -25,7 +25,9 @@ class YTMonitorService:
         self._history_timeout = history_timeout
         self._queue = new_videos_queue  # Очередь для обработки новых видео
 
-    def run(self, monitor_new: bool = True, monitor_history: bool = True) -> list[Process]:
+    def run(
+        self, monitor_new: bool = True, monitor_history: bool = True, monitor_video_formats: bool = True
+    ) -> list[Process]:
         """Запускает процессы мониторинга новых видео и истории каналов."""
         processes: list[Process] = []
 
@@ -38,6 +40,11 @@ class YTMonitorService:
             history_process = Process(target=self._start_async_loop, args=(self._monitor_channel_videos_history,))
             processes.append(history_process)
             history_process.start()
+
+        if monitor_video_formats:
+            video_formats_process = Process(target=self._start_async_loop, args=(self._update_video_formats,))
+            processes.append(video_formats_process)
+            video_formats_process.start()
 
         return processes
 
@@ -56,7 +63,7 @@ class YTMonitorService:
                 except Exception as e:
                     logger.error(f"Error monitoring new videos for {channel_url}: {e}")
                 await asyncio.sleep(2)
-            logger.info(f"Waiting for {self._new_videos_timeout} seconds")
+            logger.info(f"(NEW VIDEOS) Waiting for {self._new_videos_timeout} seconds")
             await asyncio.sleep(self._new_videos_timeout)
 
     async def _monitor_channel_videos_history(self):
@@ -71,7 +78,18 @@ class YTMonitorService:
                 except Exception as e:
                     logger.error(f"Error updating channel history for {channel_url}: {e}")
                 await asyncio.sleep(2)
-            logger.info(f"Waiting for {self._history_timeout} seconds")
+            logger.info(f"(HISTORY) Waiting for {self._history_timeout} seconds")
+            await asyncio.sleep(self._history_timeout)
+
+    async def _update_video_formats(self):
+        """Update video formats in the database."""
+        while True:
+            logger.info("Updating video formats...")
+            for channel_url in enumerate(self._channels_list):
+                yt_dlp_client = YTChannelDownloader(channel_url)
+                yt_dlp_client.update_video_formats()
+                await asyncio.sleep(5)
+            logger.info(f"(FORMATS) Waiting for {self._history_timeout} seconds")
             await asyncio.sleep(self._history_timeout)
 
     async def _process_channel_videos(self, channel_url: str, process_new: bool = False, process_old: bool = False):
@@ -146,7 +164,6 @@ class YTMonitorService:
         )
 
         if process_new and new_videos:
-            yt_dlp_client.update_video_formats()
             self._process_new_videos(new_videos, channel_id)
 
             if self._queue is not None:

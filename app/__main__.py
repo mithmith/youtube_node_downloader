@@ -51,7 +51,7 @@ if __name__ == "__main__":
     monitor = YTMonitorService(channels_list=channels_list, new_videos_queue=queue)
 
     # Запускаем процессы
-    monitor_processes = monitor.run(settings.monitor_new, settings.monitor_history)
+    monitor_processes = monitor.run(settings.monitor_new, settings.monitor_history, settings.monitor_video_formats)
     if settings.run_tg_bot:
         tg_bot = TelegramBotService(
             bot_token=settings.tg_bot_token,

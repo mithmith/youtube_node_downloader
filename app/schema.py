@@ -55,8 +55,8 @@ class ChannelInfoSchema(BaseModel):
     description: Optional[str] = None
     tags: list[str]
     thumbnails: list[ThumbnailSchema]
-    uploader_id: str
-    uploader_url: str
+    uploader_id: str = ""
+    uploader_url: Optional[str] = ""
     modified_date: Optional[str] = None
     view_count: Optional[int] = None
     playlist_count: Optional[int] = None
@@ -142,6 +142,6 @@ class YTFormatSchema(BaseModel):
     aspect_ratio: Optional[float] = None
     dynamic_range: Optional[str] = None
     language: Optional[str] = None
-    quality: Optional[int] = 0
+    quality: Optional[float] = 0
     has_drm: Optional[bool] = False
     filesize_approx: Optional[int] = None  # Приблизительный размер файла

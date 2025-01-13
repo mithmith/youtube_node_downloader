@@ -66,6 +66,7 @@ class TelegramBotService:
     async def _publish_messages(self, bot: Bot):
         """Публикация сообщений из очереди каждые N секунд."""
         # bot = Bot(token=self._bot_token)
+        await asyncio.sleep(10)
         logger.info("News feed Bot is running...")
 
         while True:

@@ -183,7 +183,7 @@ def upgrade() -> None:
         sa.Column("height", sa.Integer(), nullable=True),
         sa.Column("dynamic_range", sa.String(), nullable=True),
         sa.Column("language", sa.String(), nullable=True),
-        sa.Column("quality", sa.Integer(), nullable=True, server_default="0"),
+        sa.Column("quality", sa.Float(), nullable=True, server_default="0"),
         sa.Column("has_drm", sa.Boolean(), nullable=True, server_default="false"),
         sa.Column("filesize_approx", sa.BigInteger(), nullable=True),
         sa.Column("file_path", sa.String(), nullable=True),
