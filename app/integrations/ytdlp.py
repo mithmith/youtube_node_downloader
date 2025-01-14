@@ -110,7 +110,7 @@ class YTChannelDownloader:
                 self._repository.add_video_format(format_data, v_id)
             logger.debug(f"[{i+1}/{len(video_ids)}] Added video formats for v_id: {v_id}")
 
-    def get_video_formats(self, video_id: str) -> list[YTFormatSchema] | None:
+    def get_video_formats(self, video_id: str) -> list[YTFormatSchema]:
         result = subprocess.run(
             [
                 "yt-dlp",
@@ -125,7 +125,7 @@ class YTChannelDownloader:
         )
         if result.returncode != 0:
             logger.error(f"Ошибка при выполнении yt-dlp для video_id={video_id}: {result.stderr}")
-            return None
+            return []
 
         try:
             video_data = json.loads(result.stdout)
@@ -140,7 +140,7 @@ class YTChannelDownloader:
             return formats
         except json.JSONDecodeError as e:
             logger.error(f"Не удалось декодировать JSON: {e}")
-            return None
+            return []
 
     def channel_exist(self, channel_id: str) -> bool:
         return bool(self._repository.get_channel_by_id(channel_id))

@@ -1,4 +1,6 @@
 import asyncio
+import time
+from asyncio import AbstractEventLoop
 from multiprocessing import Process, Queue
 from queue import Empty
 
@@ -17,9 +19,11 @@ class TelegramBotService:
         self._bot_token = bot_token
         self._group_id = group_id
         self._queue = queue
-        self._delay = delay
+        self._delay = delay  # Задержка между отправками сообщений с новыми видео
+        self._max_retries = 3  # Максимальное количество попыток запуска бота и отправки сообщений
+        self._retry_delay = 5  # Задержка между неудачными попытками (в секундах)
         self._users_ids = users_ids or []
-        logger.info("Telegram bot created")
+        logger.info("Telegram bot is created")
 
     def run(self):
         """Запускает поток для публикации сообщений из очереди."""
@@ -29,43 +33,66 @@ class TelegramBotService:
 
     def _start(self):
         """Инициализация всех обработчиков и запуск бота."""
-        application = Application.builder().token(self._bot_token).build()
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_message))
-        application.add_handler(CommandHandler("start", self._start_command))
-        # application.run_polling(allowed_updates=Update.ALL_TYPES)
+        for attempt in range(1, self._max_retries + 1):
+            try:
+                application = Application.builder().token(self._bot_token).build()
+                application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_message))
+                application.add_handler(CommandHandler("start", self._start_command))
 
-        # Создаем задачи для асинхронного выполнения, Создаём новый event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.create_task(self._publish_messages(application.bot))
-        # logger.info("Telegram bot is starting...")
-        # loop.run_until_complete(application.run_polling(allowed_updates=Update.ALL_TYPES))
+                # Создаём новый event loop для асинхронных задач
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                # Добавляем задачу публикации сообщений
+                loop.create_task(self._publish_messages(application.bot))
 
-        # Запускаем бота
-        try:
-            logger.info("Starting Telegram bot...")
-            application.run_polling(
-                read_timeout=60,
-                write_timeout=60,
-                connect_timeout=60,
-                pool_timeout=60,
-                timeout=60,
-            )
-        except Exception as e:
-            logger.error(f"Error in Telegram bot: {e}")
-        finally:
-            if not loop.is_closed():
-                # Закрываем цикл событий
-                loop.run_until_complete(loop.shutdown_asyncgens())
-                loop.close()
+                try:
+                    logger.info("Starting Telegram bot...")
+                    application.run_polling(
+                        # allowed_updates=Update.ALL_TYPES,
+                        read_timeout=60,
+                        write_timeout=60,
+                        connect_timeout=60,
+                        pool_timeout=60,
+                        timeout=60,
+                    )
+                except Exception as e:
+                    logger.error(f"Error during polling: {e}")
+                    raise
+                break
+            except KeyboardInterrupt:
+                logger.info("Keyboard interrupt detected, shutting down...")
+            except TelegramError as te:
+                logger.error(f"Telegram API error: {te}")
+            except Exception as e:
+                logger.error(f"Unexpected error in Telegram bot: {e}")
+            finally:
+                self._graceful_shutdown(application, loop)
+
+            # Если это не последняя попытка, ждем перед повтором
+            if attempt < self._max_retries:
+                logger.warning(f"Повторная попытка запуска через {attempt*self._retry_delay} секунд...")
+                time.sleep(attempt * self._retry_delay)
+            else:
+                logger.error("Не удалось запустить Telegram бота после всех попыток.")
+                raise RuntimeError("Telegram bot failed to start after multiple retries.")
 
     def _start_async_loop(self, coro_func, *args, **kwargs):
         """Запускает событийный цикл для асинхронной функции."""
         asyncio.run(coro_func(*args, **kwargs))
 
+    def _graceful_shutdown(self, application: Application, loop: AbstractEventLoop):
+        """Корректно завершает работу бота и цикла событий."""
+        try:
+            logger.info("Shutting down Telegram bot...")
+            if not loop.is_closed():
+                loop.run_until_complete(application.shutdown())
+                loop.run_until_complete(loop.shutdown_asyncgens())
+                loop.close()
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
+
     async def _publish_messages(self, bot: Bot):
         """Публикация сообщений из очереди каждые N секунд."""
-        # bot = Bot(token=self._bot_token)
         await asyncio.sleep(10)
         logger.info("News feed Bot is running...")
 
@@ -92,17 +119,16 @@ class TelegramBotService:
             except Exception as e:
                 logger.error(f"Ошибка при отправке сообщения: {e}")
 
-    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, retries: int = 3, delay: int = 5):
+    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str):
         """
         Отправляет сообщение в Telegram с заданным числом повторных попыток.
 
         :param bot: Экземпляр бота Telegram.
         :param chat_id: ID чата, куда отправляется сообщение.
         :param text: Текст сообщения.
-        :param retries: Количество попыток отправки.
         :param delay: Задержка между попытками (в секундах).
         """
-        for attempt in range(1, retries + 1):
+        for attempt in range(1, self._max_retries + 1):
             try:
                 await bot.send_message(
                     chat_id=chat_id,
@@ -112,15 +138,17 @@ class TelegramBotService:
                 logger.info("Сообщение успешно отправлено")
                 return  # Успешная отправка, выходим из функции
             except TelegramError as te:
-                logger.error(f"Telegram API error (попытка {attempt} из {retries}): {te}")
+                logger.error(f"Telegram API error (попытка {attempt} из {self._max_retries}): {te}")
             except asyncio.TimeoutError:
-                logger.error(f"Timeout error при отправке сообщения (попытка {attempt} из {retries})")
+                logger.error(f"Timeout error при отправке сообщения (попытка {attempt} из {self._max_retries})")
             except Exception as e:
-                logger.error(f"Неизвестная ошибка при отправке сообщения (попытка {attempt} из {retries}): {e}")
+                logger.error(
+                    f"Неизвестная ошибка при отправке сообщения (попытка {attempt} из {self._max_retries}): {e}"
+                )
 
-            if attempt < retries:
-                logger.info(f"Повторная попытка отправки сообщения через {delay} секунд...")
-                await asyncio.sleep(delay)
+            if attempt < self._max_retries:
+                logger.info(f"Повторная попытка отправки сообщения через {self._retry_delay} секунд...")
+                await asyncio.sleep(self._retry_delay)
 
         logger.error("Не удалось отправить сообщение после всех попыток")
 

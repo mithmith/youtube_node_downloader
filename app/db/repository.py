@@ -414,19 +414,6 @@ class YoutubeDataRepository(BaseRepository[Channel]):
     def get_video_ids_without_formats(self, limit: int = 50) -> list[str]:
         """
         Retrieves a list of video IDs that do not have any associated format entries, up to a specified limit.
-
-        Args:
-            limit (int): The maximum number of video IDs to retrieve.
-
-        Returns:
-            list[str]: A list of video IDs that have no associated formats.
-
-        Description:
-            This method queries the database to find videos that do not have associated format details in the
-            'video_formats' table. It utilizes a subquery to find distinct video IDs in the 'video_formats'
-            table and then performs a LEFT OUTER JOIN to determine which videos from the 'videos' table do not
-            have corresponding entries in the 'video_formats' table. This method is useful for identifying videos
-            that need their format details updated or added.
         """
         # Creating a subquery to get distinct video IDs from the video_formats table
         subquery = self.session.query(YTFormat.video_id).distinct().subquery()
@@ -437,6 +424,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             .outerjoin(subquery, Video.id == subquery.c.video_id)
             .filter(subquery.c.video_id == None)
             .limit(limit)
+            .offset(0)
         )
 
         # Executing the query and returning the results
