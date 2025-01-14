@@ -31,6 +31,11 @@
   - [Шаг 5: Запуск и активация сервиса](#шаг-5-запуск-и-активация-сервиса)
   - [Шаг 6: Проверка работы](#шаг-6-проверка-работы)
   - [Примечания](#примечания)
+- [Форматы URL YouTube-каналов](#форматы-url-youtube-каналов)
+  - [1. User-friendly URL (Пользовательский URL):](#1-user-friendly-url-пользовательский-url)
+  - [2. Full Channel URL (Полный URL с ID канала):](#2-full-channel-url-полный-url-с-id-канала)
+  - [3. Handle URL (URL с хэндлом):](#3-handle-url-url-с-хэндлом)
+  - [Пример файла `channels_list.json`:](#пример-файла-channels_listjson)
 
 
 ## Установка проекта с использованием `pip` и файла `requirements.txt`
@@ -608,3 +613,48 @@ WantedBy=multi-user.target
    ```
 
 ---
+
+## Форматы URL YouTube-каналов
+
+YouTube поддерживает несколько типов URL для каналов. Любой из них можно использовать для добавления канала в файл `channels_list.json`.
+
+### 1. User-friendly URL (Пользовательский URL):
+   Этот URL удобен для чтения и содержит имя пользователя:
+   ```text
+   https://www.youtube.com/c/<user_name>
+   ```
+   **Пример:**
+   ```text
+   https://www.youtube.com/c/creatoracademy
+   ```
+
+### 2. Full Channel URL (Полный URL с ID канала):
+   Этот URL содержит уникальный идентификатор канала:
+   ```text
+   https://www.youtube.com/channel/<CHANNEL-ID>
+   ```
+   **Пример:**
+   ```text
+   https://www.youtube.com/channel/UCkRfArvrzheW2E7b6SVT7vQ
+   ```
+
+### 3. Handle URL (URL с хэндлом):
+   YouTube предоставляет хэндлы (уникальные @handles), которые можно использовать в URL:
+   ```text
+   https://www.youtube.com/@<handle>
+   ```
+   **Пример:**
+   ```text
+   https://www.youtube.com/@RedProlet
+   ```
+
+### Пример файла `channels_list.json`:
+```json
+{
+    "channels": [
+        "https://www.youtube.com/channel/UCkRfArvrzheW2E7b6SVT7vQ", 
+        "https://www.youtube.com/c/creatoracademy",
+        "https://www.youtube.com/@RedProlet",
+    ]
+}
+```

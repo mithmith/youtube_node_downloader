@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 from uuid import UUID, uuid4
 
 from loguru import logger
@@ -286,14 +286,14 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         )
         self.add(video_history)
 
-    def get_channel_by_id(self, channel_id: str) -> Channel | None:
+    def get_channel_by_id(self, channel_id: str) -> Optional[Channel]:
         channel: Channel = self.session.query(Channel).filter_by(channel_id=channel_id).first()
         if channel:
             return channel
         logger.warning(f"Channel with youtube channel_id '{channel_id}' not found.")
         return None
 
-    def get_video_by_id(self, youtube_video_id: str) -> Video | None:
+    def get_video_by_id(self, youtube_video_id: str) -> Optional[Video]:
         """
         Retrieves a video from the database using its YouTube video ID.
 
@@ -364,7 +364,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             logger.warning(f"No videos found for channel ID {channel_id}")
             return []
 
-    def get_channel_id_by_url(self, channel_url: str) -> str | None:
+    def get_channel_id_by_url(self, channel_url: str) -> Optional[str]:
         """
         Retrieves the channel ID based on a given channel URL from the database.
 
@@ -622,12 +622,6 @@ class YoutubeDataRepository(BaseRepository[Channel]):
 
         Args:
             video_id (UUID): The unique identifier of the video to be deleted.
-
-        Description:
-            This method attempts to retrieve a video by its unique identifier from the database.
-            If the video is found, it is deleted from the database and the change is committed.
-            If no video is found with the provided ID, a warning is logged to indicate that the video
-            could not be found and no action is taken.
         """
         video: Video = self._session.get(Video, str(video_id))
         if video:
