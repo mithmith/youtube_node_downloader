@@ -5,24 +5,25 @@ from multiprocessing import Process, Queue
 from queue import Empty
 
 from loguru import logger
-from telegram import Bot, Message, Update
+from telegram import Bot, Update
 from telegram.error import TelegramError
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import Application
 
+from app.config import settings
+from app.integrations.telegram import get_telegram_handlers
 from app.schema import NewVideoSchema
 
 
 class TelegramBotService:
     """Класс для публикации сообщений в Telegram."""
 
-    def __init__(self, bot_token: str, group_id: str, queue: Queue, delay: int = 30, users_ids: list[str] = None):
+    def __init__(self, bot_token: str, group_id: str, queue: Queue, delay: int = 30):
         self._bot_token = bot_token
         self._group_id = group_id
         self._queue = queue
         self._delay = delay  # Задержка между отправками сообщений с новыми видео
         self._max_retries = 3  # Максимальное количество попыток запуска бота и отправки сообщений
         self._retry_delay = 5  # Задержка между неудачными попытками (в секундах)
-        self._users_ids = users_ids or []
         logger.info("Telegram bot is created")
 
     def run(self):
@@ -36,19 +37,20 @@ class TelegramBotService:
         for attempt in range(1, self._max_retries + 1):
             try:
                 application = Application.builder().token(self._bot_token).build()
-                application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self._handle_message))
-                application.add_handler(CommandHandler("start", self._start_command))
+                for handler in get_telegram_handlers():
+                    application.add_handler(handler)
 
                 # Создаём новый event loop для асинхронных задач
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                # Добавляем задачу публикации сообщений
-                loop.create_task(self._publish_messages(application.bot))
+                if settings.monitor_new:
+                    # Добавляем задачу публикации сообщений
+                    loop.create_task(self._publish_messages(application.bot))
 
                 try:
                     logger.info("Starting Telegram bot...")
                     application.run_polling(
-                        # allowed_updates=Update.ALL_TYPES,
+                        allowed_updates=Update.ALL_TYPES,
                         read_timeout=60,
                         write_timeout=60,
                         connect_timeout=60,
@@ -126,7 +128,6 @@ class TelegramBotService:
         :param bot: Экземпляр бота Telegram.
         :param chat_id: ID чата, куда отправляется сообщение.
         :param text: Текст сообщения.
-        :param delay: Задержка между попытками (в секундах).
         """
         for attempt in range(1, self._max_retries + 1):
             try:
@@ -152,94 +153,6 @@ class TelegramBotService:
 
         logger.error("Не удалось отправить сообщение после всех попыток")
 
-    async def _handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Обработка входящих сообщений от пользователей."""
-        user_id = update.effective_user.id
-        full_username = update.effective_user.full_name
-        text = update.message.text
-        logger.debug(f"Received message from user {full_username} ({user_id}): {text}")
-
-        # Проверяем, является ли сообщение ответом на сообщение бота
-        reply_to_message: Message = update.message.reply_to_message
-        if reply_to_message and reply_to_message.from_user and reply_to_message.from_user.id == context.bot.id:
-            logger.debug("Message is a reply to the bot")
-
-            # Пытаемся извлечь ID оригинального пользователя
-            try:
-                original_user_id = self._extract_original_user_id(reply_to_message.text)
-            except Exception as e:
-                logger.error(f"Failed to extract original user ID from reply: {e}")
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id, text="Не удалось определить пользователя для ответа."
-                )
-                return
-
-            if original_user_id:
-                # Отправляем сообщение оригинальному пользователю
-                try:
-                    await context.bot.send_message(
-                        chat_id=original_user_id,
-                        text=text,
-                    )
-                    logger.debug(f"Sent reply to original user {original_user_id}")
-                except Exception as e:
-                    logger.error(f"Failed to send reply to original user {original_user_id}: {e}")
-                    await context.bot.send_message(
-                        chat_id=update.effective_chat.id,
-                        text=f"Не удалось отправить сообщение пользователю {original_user_id}.",
-                    )
-                    return
-
-                # Пересылаем сообщение всем администраторам, кроме оригинального пользователя
-                for admin_id in self._users_ids:
-                    if str(admin_id) != str(original_user_id) and str(admin_id) != str(user_id):
-                        try:
-                            await context.bot.send_message(
-                                chat_id=admin_id,
-                                text=(
-                                    f"Ответ от {full_username} (tg://user?id={user_id}) "
-                                    f"пользователю (id={original_user_id}):\n{text}"
-                                ),
-                                # parse_mode="Text",
-                            )
-                            logger.debug(f"Forwarded reply to admin {admin_id}")
-                        except Exception as e:
-                            logger.error(f"Failed to forward reply to admin {admin_id}: {e}")
-                return
-
-        # Если это не ответное сообщение, рассылаем его всем администраторам
-        logger.debug("Message is not a reply. Forwarding to all admins.")
-        for admin_id in self._users_ids:
-            try:
-                await context.bot.send_message(
-                    chat_id=admin_id,
-                    text=(f"Сообщение от {full_username} (id={user_id}):\n{text}"),
-                    # parse_mode="Text",
-                )
-                logger.debug(f"Forwarded message to admin {admin_id}")
-            except Exception as e:
-                logger.error(f"Failed to forward message to admin {admin_id}: {e}")
-
-        # Подтверждаем отправителю, что его сообщение получено
-        await update.message.reply_text("Ваше сообщение получено. Спасибо!")
-
-    async def _start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Обработка команды /start."""
-        await update.message.reply_text("Привет! Я Telegram-бот. Напишите мне что-нибудь.")
-
     def _format_telegram_message(self, channel_name, channel_url, video_title, video_url):
         """Форматирование сообщения в Markdown формате."""
         return f'**[{video_title}]({video_url})**\nНа канале "[{channel_name}]({channel_url})" вышло новое видео:'
-
-    def _extract_original_user_id(self, text: str) -> str | None:
-        """Извлекает ID оригинального пользователя из текста сообщения."""
-        try:
-            # Пытаемся найти строку вида `(id=123456789)`
-            start_index = text.find("(id=") + 4
-            end_index = text.find(")", start_index)
-            if start_index > 3 and end_index > start_index:  # Убедимся, что индексы корректны
-                user_id = text[start_index:end_index]
-                return user_id if user_id.isdigit() else None
-        except Exception as e:
-            logger.error(f"Failed to extract user ID: {e}")
-        return None

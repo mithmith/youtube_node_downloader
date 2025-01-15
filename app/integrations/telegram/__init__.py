@@ -1,0 +1,1 @@
+from app.integrations.telegram.__main__ import get_telegram_handlers

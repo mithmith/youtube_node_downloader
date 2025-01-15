@@ -57,7 +57,6 @@ if __name__ == "__main__":
             bot_token=settings.tg_bot_token,
             group_id=settings.tg_group_id,
             queue=queue,
-            users_ids=[settings.tg_admin_id],
         )
         bot_process = tg_bot.run()
         bot_process.join()

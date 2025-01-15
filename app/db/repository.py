@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 from uuid import UUID, uuid4
 
 from loguru import logger
@@ -424,7 +424,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             .outerjoin(subquery, Video.id == subquery.c.video_id)
             .filter(subquery.c.video_id == None)
             .limit(limit)
-            .offset(0)
+            .offset(165)
         )
 
         # Executing the query and returning the results
