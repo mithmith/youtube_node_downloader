@@ -1,6 +1,7 @@
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
+import psycopg2
 
 from alembic import context
 from app.config import settings
@@ -27,6 +28,30 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def create_database_if_not_exists():
+    # Подключаемся к PostgreSQL без указания базы данных (это подключение к шаблонной базе)
+    conn = psycopg2.connect(
+        dbname="postgres",  # подключаемся к базе данных по умолчанию
+        user=settings.db_username,
+        password=settings.db_password,
+        host=settings.db_host,
+        port=settings.db_port
+    )
+    conn.autocommit = True  # для создания базы данных в текущем сеансе
+    cursor = conn.cursor()
+
+    # Проверяем, существует ли база данных
+    cursor.execute(f"SELECT 1 FROM pg_database WHERE datname = '{settings.db_name}';")
+    if not cursor.fetchone():
+        # Создаём базу данных, если её нет
+        cursor.execute(f"CREATE DATABASE {settings.db_name};")
+        print(f"База данных {settings.db_name} была успешно создана.")
+    else:
+        print(f"База данных {settings.db_name} уже существует.")
+    
+    # Закрываем соединение
+    cursor.close()
+    conn.close()
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -74,6 +99,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
+create_database_if_not_exists()
 if context.is_offline_mode():
     run_migrations_offline()
 else:
