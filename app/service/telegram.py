@@ -153,6 +153,6 @@ class TelegramBotService:
 
         logger.error("Не удалось отправить сообщение после всех попыток")
 
-    def _format_telegram_message(self, channel_name, channel_url, video_title, video_url):
+    def _format_telegram_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
         return f'**[{video_title}]({video_url})**\nНа канале "[{channel_name}]({channel_url})" вышло новое видео:'

@@ -424,7 +424,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             .outerjoin(subquery, Video.id == subquery.c.video_id)
             .filter(subquery.c.video_id == None)
             .limit(limit)
-            .offset(165)
+            .offset(0)  # 280
         )
 
         # Executing the query and returning the results

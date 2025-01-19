@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     db_username: str = "postgres"
     db_password: str = "postgres"
 
-    monitor_new: bool = False
+    monitor_new: bool = True
     monitor_history: bool = False
     monitor_video_formats: bool = False
     run_tg_bot: bool = True

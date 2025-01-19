@@ -18,6 +18,7 @@
   - [Шаг 2: Создание переменных и списка каналов](#шаг-2-создание-переменных-и-списка-каналов)
   - [Шаг 3: Установка PostgreSQL и YT-DLP](#шаг-3-установка-postgresql-и-yt-dlp)
   - [Шаг 4: Установка инструментов `poetry` и `alembic`](#шаг-4-установка-инструментов-poetry-и-alembic)
+    - [Полное руководство с установкой `pip`:](#полное-руководство-с-установкой-pip)
   - [Шаг 5: Создание таблиц в базе данных](#шаг-5-создание-таблиц-в-базе-данных)
   - [Шаг 6: Запуск проекта](#шаг-6-запуск-проекта)
 - [Установка с помощью скрипта `install.sh`](#установка-с-помощью-скрипта-installsh)
@@ -304,9 +305,10 @@ docker run --name youtube-monitoring \
    DB_USERNAME="postgres"
    DB_PASSWORD="postgres"
 
-   MONITOR_NEW=1
-   MONITOR_HISTORY=1
-   RUN_TG_BOT=1
+   MONITOR_NEW = 1
+   MONITOR_HISTORY = 1
+   MONITOR_VIDEO_FORMATS = 0
+   RUN_TG_BOT = 1
    ```
 
 2. Создайте файл `channels_list.json` (переименуйте `channels_list.json.example`) в корне проекта и добавьте туда список YouTube-каналов в формате JSON:
@@ -357,6 +359,12 @@ docker run --name youtube-monitoring \
    sudo apt -y install yt-dlp
    ```
 
+   Или из [официального репозитория](https://github.com/yt-dlp/yt-dlp):
+   ```bash
+   cd ~
+   wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+   ```
+
 ---
 
 ### Шаг 4: Установка инструментов `poetry` и `alembic`
@@ -366,10 +374,44 @@ docker run --name youtube-monitoring \
    python3 -m pip install --disable-pip-version-check -U pip wheel poetry
    ```
 
-2. Настройте Poetry:
+   Если возникает ошибка `/usr/bin/python3: No module named pip`, это означает, что `pip` (менеджер пакетов Python) не установлен в вашей системе. В такой ситуации нужно сначала установить `pip`, а затем продолжить установку других пакетов.
+
+   #### Полное руководство с установкой `pip`:
+
+   1.1. **Обновите менеджер пакетов и установите нужные инструменты:**
+      ```bash
+      sudo apt update
+      sudo apt install -y python3 python3-distutils python3-venv
+      ```
+
+   1.2. **Установите `pip`:**
+      Загрузите и установите `pip` с использованием `get-pip.py`:
+      ```bash
+      wget https://bootstrap.pypa.io/get-pip.py
+      sudo python3 get-pip.py --break-system-packages
+      ```
+
+   1.3. **Убедитесь, что `pip` установлен:**
+      Проверьте версию `pip`:
+      ```bash
+      python3 -m pip --version
+      ```
+
+   1.4. **Установите необходимые пакеты:**
+      Теперь вы можете выполнить команду для установки `poetry`:
+      ```bash
+      python3 -m pip install --disable-pip-version-check -U pip wheel poetry
+      ```
+
+2. Настройте Poetry, создание виртуального окружения:
    ```bash
-   poetry config virtualenvs.create false
+   poetry config virtualenvs.create true
    ```
+
+   2.1. Если возникла ошибка `-bash: poetry: command not found`:
+      ```bash
+      export PATH="$HOME/.local/bin:$PATH"
+      ```
 
 3. Установите зависимости проекта:
    ```bash
