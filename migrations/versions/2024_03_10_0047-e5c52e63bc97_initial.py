@@ -27,8 +27,8 @@ def upgrade() -> None:
         -- Создание базы данных, если она не существует
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = {settings.db_name}) THEN
-                CREATE DATABASE {settings.db_name};
+            IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = '{settings.db_name}') THEN
+                CREATE DATABASE '{settings.db_name}';
             END IF;
         END
         $$;
@@ -36,14 +36,14 @@ def upgrade() -> None:
         -- Создание пользователя, если он не существует
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = {settings.db_username}) THEN
-                CREATE USER {settings.db_username} WITH PASSWORD '{settings.db_password}';
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{settings.db_username}') THEN
+                CREATE USER '{settings.db_username}' WITH PASSWORD '{settings.db_password}';
             END IF;
         END
         $$;
 
         -- Назначение привилегий на базу
-        GRANT ALL PRIVILEGES ON DATABASE {settings.db_name} TO {settings.db_username};
+        GRANT ALL PRIVILEGES ON DATABASE '{settings.db_name}' TO '{settings.db_username}';
         """))
     op.create_table(
         "channels",
