@@ -23,12 +23,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # SQL-запрос для создания базы данных, пользователя и привилегий, если они не существуют
-    create_db_sql = text(f"""
+    op.execute(text(f"""
         -- Создание базы данных, если она не существует
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :dbname) THEN
-                CREATE DATABASE :dbname;
+            IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = {settings.db_name}) THEN
+                CREATE DATABASE {settings.db_name};
             END IF;
         END
         $$;
@@ -36,16 +36,15 @@ def upgrade() -> None:
         -- Создание пользователя, если он не существует
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :username) THEN
-                CREATE USER :username WITH PASSWORD :password;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = {settings.db_username}) THEN
+                CREATE USER {settings.db_username} WITH PASSWORD '{settings.db_password}';
             END IF;
         END
         $$;
 
         -- Назначение привилегий на базу
-        GRANT ALL PRIVILEGES ON DATABASE :dbname TO :username;
-    """)
-    op.execute(create_db_sql, {"dbname": settings.db_name, "username": settings.db_username, "password": settings.db_password})
+        GRANT ALL PRIVILEGES ON DATABASE {settings.db_name} TO {settings.db_username};
+        """))
     op.create_table(
         "channels",
         sa.Column("channel_id", sa.String(), nullable=False),
