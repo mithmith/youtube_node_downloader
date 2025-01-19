@@ -79,9 +79,9 @@
 
    Выполните команды:
    ```sql
-   CREATE DATABASE peer_tube;
+   CREATE DATABASE peer_tube_db;
    CREATE USER postgres WITH PASSWORD 'postgres';
-   GRANT ALL PRIVILEGES ON DATABASE peer_tube TO postgres;
+   GRANT ALL PRIVILEGES ON DATABASE peer_tube_db TO postgres;
    ```
 
 Если Python не установлен, загрузите и установите его.
@@ -347,9 +347,9 @@ docker run --name youtube-monitoring \
 
    Выполните команды:
    ```sql
-   CREATE DATABASE peer_tube;
+   CREATE DATABASE peer_tube_db;
    CREATE USER postgres WITH PASSWORD 'postgres';
-   GRANT ALL PRIVILEGES ON DATABASE peer_tube TO postgres;
+   GRANT ALL PRIVILEGES ON DATABASE peer_tube_db TO postgres;
    ```
 
 3. Установите [YT-DLP](https://github.com/yt-dlp/yt-dlp):
@@ -372,6 +372,7 @@ docker run --name youtube-monitoring \
 1. Установите Poetry:
    ```bash
    python3 -m pip install --disable-pip-version-check -U pip wheel poetry
+   pip install poetry-plugin-shell
    ```
 
    Если возникает ошибка `/usr/bin/python3: No module named pip`, это означает, что `pip` (менеджер пакетов Python) не установлен в вашей системе. В такой ситуации нужно сначала установить `pip`, а затем продолжить установку других пакетов.
@@ -420,7 +421,7 @@ docker run --name youtube-monitoring \
 
 4. Установите Alembic для управления миграциями базы данных:
    ```bash
-   python3 -m pip install alembic
+   python3 -m pip install alembic --break-system-packages
    ```
 
 ---
