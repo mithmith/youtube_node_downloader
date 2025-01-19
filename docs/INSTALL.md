@@ -350,6 +350,7 @@ docker run --name youtube-monitoring \
    ```bash
    sudo apt update
    sudo apt install postgresql postgresql-contrib
+   sudo apt install postgresql-client
    ```
 
    **На Windows:**
@@ -362,7 +363,7 @@ docker run --name youtube-monitoring \
    sudo -u postgres psql
    ```
 
-   Выполните команды:
+   Выполните команды (задайте имя БД, имя пользователя и пароль, как в `.env`):
    ```sql
    CREATE DATABASE peer_tube_db;
    CREATE USER postgres WITH PASSWORD 'postgres';
@@ -376,7 +377,7 @@ docker run --name youtube-monitoring \
    sudo apt -y install yt-dlp
    ```
 
-   Или из [официального репозитория](https://github.com/yt-dlp/yt-dlp):
+   Или скачайте из [официального репозитория](https://github.com/yt-dlp/yt-dlp):
    ```bash
    cd ~
    wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
