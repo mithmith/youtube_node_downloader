@@ -14,10 +14,10 @@ class Settings(BaseSettings):
 
     db_host: str = "localhost"
     db_port: int = 5432
-    db_name: str = "peer_tube"
+    db_name: str = "peer_tube_db"
     db_schema: str = "youtube"
-    db_username: str = "postgres"
-    db_password: str = "postgres"
+    db_username: str = "peer_tube_user"
+    db_password: str = "peer_tube_password"
 
     monitor_new: bool = True
     monitor_history: bool = False

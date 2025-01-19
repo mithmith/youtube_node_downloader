@@ -9,7 +9,6 @@ Create Date: 2025-01-10 00:47:05.109880
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from sqlalchemy.sql import text
 
 from alembic import op
 from app.config import settings
@@ -22,29 +21,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # SQL-запрос для создания базы данных, пользователя и привилегий, если они не существуют
-    op.execute(text(f"""
-        -- Создание базы данных, если она не существует
-        DO $$
-        BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = '{settings.db_name}') THEN
-                CREATE DATABASE '{settings.db_name}';
-            END IF;
-        END
-        $$;
-
-        -- Создание пользователя, если он не существует
-        DO $$
-        BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{settings.db_username}') THEN
-                CREATE USER '{settings.db_username}' WITH PASSWORD '{settings.db_password}';
-            END IF;
-        END
-        $$;
-
-        -- Назначение привилегий на базу
-        GRANT ALL PRIVILEGES ON DATABASE '{settings.db_name}' TO '{settings.db_username}';
-        """))
     op.create_table(
         "channels",
         sa.Column("channel_id", sa.String(), nullable=False),

@@ -10,6 +10,8 @@
 - [Запуск проекта через Docker-контейнеры](#запуск-проекта-через-docker-контейнеры)
   - [Шаг 1: Создание переменных и списка каналов](#шаг-1-создание-переменных-и-списка-каналов)
   - [Шаг 2: Установка контейнера PostgreSQL](#шаг-2-установка-контейнера-postgresql)
+    - [Запустите PostgreSQL с помощью Docker (если у вас ещё нет PostgreSQL):](#запустите-postgresql-с-помощью-docker-если-у-вас-ещё-нет-postgresql)
+    - [ЛИБО: скачайте последнюю версию PostgreSQL, создайте БД, пользователя и пароль:](#либо-скачайте-последнюю-версию-postgresql-создайте-бд-пользователя-и-пароль)
   - [Шаг 3: Сборка Docker-образа проекта](#шаг-3-сборка-docker-образа-проекта)
   - [Шаг 4: Запуск проекта](#шаг-4-запуск-проекта)
   - [Шаг 5: Проверка работы сервиса](#шаг-5-проверка-работы-сервиса)
@@ -65,6 +67,7 @@
    ```bash
    sudo apt update
    sudo apt install postgresql postgresql-contrib
+   sudo apt install postgresql-client
    ```
 
    **На Windows:**
@@ -199,7 +202,7 @@ python -m app
 
 ### Шаг 2: Установка контейнера PostgreSQL
 
-Запустите PostgreSQL с помощью Docker (если у вас ещё нет PostgreSQL):
+#### Запустите PostgreSQL с помощью Docker (если у вас ещё нет PostgreSQL):
 
 ```bash
 docker run --name postgres-db \
@@ -210,8 +213,22 @@ docker run --name postgres-db \
     -d postgres:14
 ```
 
-Эта команда создаёт и запускает контейнер с базой данных.
+Эта команда создаёт и запускает контейнер с базой данных PostgreSQL14.
 
+---
+
+#### ЛИБО: скачайте последнюю версию PostgreSQL, создайте БД, пользователя и пароль:
+   ```bash
+   sudo docker exec -it postgres bash
+   ```
+   ```bash
+   psql -U postgres
+   ```
+   ```sql
+   CREATE DATABASE peer_tube_db;
+   CREATE USER peer_tube_user WITH PASSWORD 'peer_tube_password';
+   GRANT ALL PRIVILEGES ON DATABASE peer_tube_db TO peer_tube_user;
+   ```
 ---
 
 ### Шаг 3: Сборка Docker-образа проекта
