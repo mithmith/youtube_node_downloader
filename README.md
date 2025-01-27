@@ -4,12 +4,20 @@
 Youtube Parser Downloader is an open-source project designed for collecting statistical information about YouTube videos, channel monitoring, downloading videos, audio, subtitles, and thumbnails, as well as implementing a number of additional features such as content localization and editing. This tool is intended for researchers, developers, and anyone interested in analyzing YouTube content and its further use.
 
 ## README.md
-- English [README.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.md)
-- Русский [README.ru.md](https://github.com/mithmith/peer_node_downloader/blob/main/README.ru.md)
+- English [README.md](README.md)
+- Русский [README.ru.md](README.ru.md)
+
+## DEPENCIES
+
+1. [Docker install](docs/docker_install.md)
+2. [Postgres install](docs/postgres_install.md)
+3. [PIP install](docs/pip_install.md)
+4. [Youtube api install](docs/yt_api_install.md)
+5. [YT-DLP install](docs/yt-dlp_install.md)
 
 ## Project INSTALLATION 🚀
 
-The project supports several installation methods:
+The project supports several [installation](docs/INSTALL.md) methods:
 
 1. **Via pip**: A quick way for Python users.
 2. **Using Docker**: A convenient way with environment isolation.

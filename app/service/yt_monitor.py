@@ -149,12 +149,9 @@ class YTMonitorService:
             videos_to_process = old_videos
 
         # Получение дополнительной информации о видео через YouTube API
-        try:
-            video_ids = [video.id for video in videos_to_process]
+        video_ids = [video.id for video in videos_to_process]
+        if video_ids:
             api_videos_info = api_client.get_video_info_list(video_ids)
-        except Exception as e:
-            logger.error(f"Error retrieving video info from YouTube API for {channel_url}: {e}")
-            return
 
         # Объединение данных о видео
         complete_video_list = self._combine_video_info(videos_to_process, api_videos_info)
