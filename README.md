@@ -1,13 +1,13 @@
 # Youtube Parser Downloader
 
-## Overview
+## Overview ✨
 Youtube Parser Downloader is an open-source project designed for collecting statistical information about YouTube videos, channel monitoring, downloading videos, audio, subtitles, and thumbnails, as well as implementing a number of additional features such as content localization and editing. This tool is intended for researchers, developers, and anyone interested in analyzing YouTube content and its further use.
 
-## README.md
+## README.md 🌐
 - English [README.md](README.md)
 - Русский [README.ru.md](README.ru.md)
 
-## DEPENCIES
+## DEPENCIES 💡
 
 1. [Docker install](docs/docker_install.md)
 2. [Postgres install](docs/postgres_install.md)
@@ -15,7 +15,26 @@ Youtube Parser Downloader is an open-source project designed for collecting stat
 4. [Youtube api install](docs/yt_api_install.md)
 5. [YT-DLP install](docs/yt-dlp_install.md)
 
-## Project INSTALLATION 🚀
+## Fast INSTALLATION 🚀
+
+```bash
+    git clone https://github.com/mithmith/youtube_node_downloader.git
+    cd youtube_node_downloader
+```
+
+Create file with youtube channel urls `channels_list.json` from `channels_list.json.example`.
+
+```bash
+    sudo pip3 install -r requirements.txt
+    export TG_BOT_TOKEN=<Your Telegram bot token>
+    export TG_GROUP_ID=<Your target group ID for posting>
+    export TG_GROUP_ID=<Your target group ID for posting>
+    export YOUTUBE_API_KEY=<Your Youtube api key>
+    export YOUTUBE_SECRET_JSON=<secret json file name from Google API board>
+    python3 -m app
+```
+
+## Full INSTALLATION 🔧🚀
 
 The project supports several [installation](docs/INSTALL.md) methods:
 
@@ -28,7 +47,7 @@ The project supports several [installation](docs/INSTALL.md) methods:
 
 ---
 
-## Features
+## Features 🚩
 - Parsing information about channels and videos through `yt-dlp` and YouTube API.
 - Monitoring channels and obtaining new videos.
 - Downloading video, audio, subtitles, and thumbnails.
@@ -40,7 +59,7 @@ The project supports several [installation](docs/INSTALL.md) methods:
 
 ---
 
-## How to Help the Project
+## How to Help the Project 🧑‍💻
 We welcome any help and offer a wide range of tasks for contribution to the project, from programming to documentation. If you want to help, take a look at our [task list](https://github.com/mithmith/peer_node_downloader/blob/main/TODO.md) and choose what you like. We appreciate every contribution!
 
 ## Task List
@@ -53,7 +72,7 @@ We welcome any help and offer a wide range of tasks for contribution to the proj
 ## Join the Development
 To start working with the project, please familiarize yourself with our participation guides and code of conduct. We aim to create a welcoming and productive community.
 
-## Contact
+## Contact 🔊
 If you have any questions or suggestions, feel free to contact us through [creating an issue](https://github.com/mithmith/peer_node_downloader/issues) in the project repository.
 
 ## Used Libraries
