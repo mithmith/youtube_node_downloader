@@ -10,6 +10,7 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError
 from loguru import logger
+from sshtunnel import SSHTunnelForwarder
 
 from app.config import settings
 from app.db.base import Session
@@ -19,7 +20,7 @@ from app.schema import ChannelAPIInfoSchema, ThumbnailSchema, VideoSchema
 
 
 class YTApiClient:
-    def __init__(self):
+    def __init__(self, over_ssh_tunnel: bool = False):
         # Disable OAuthlib's HTTPS verification when running locally.
         # *DO NOT* leave this option enabled in production.
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -29,6 +30,12 @@ class YTApiClient:
         self._client_secrets_file = settings.youtube_secret_json
         self._repository = YoutubeDataRepository(session=Session())
         self._credentials_file = f"google-oauth2.pickle"
+        self.over_ssh_tunnel = over_ssh_tunnel
+        self.tunnel = None
+
+    def __del__(self):
+        """Закрывает SSH-туннель и очищает переменные окружения."""
+        self._stop_ssh_tunnel()
 
     def _get_credentials(self):
         """Получить или обновить учетные данные."""
@@ -79,6 +86,31 @@ class YTApiClient:
             else:
                 raise
 
+    def _start_ssh_tunnel(self):
+        """Запускает SSH-туннель и настраивает https_proxy."""
+        self.tunnel = SSHTunnelForwarder(
+            (settings.ssh_host, settings.ssh_port),
+            ssh_username=settings.ssh_user,
+            ssh_pkey=settings.ssh_private_key,
+            remote_bind_address=("www.googleapis.com", 443),
+            local_bind_address=("127.0.0.1", 8443),
+        )
+        self.tunnel.start()
+
+        # Перенаправляем HTTPS-запросы через туннель
+        os.environ["https_proxy"] = f"http://127.0.0.1:{self.tunnel.local_bind_port}"
+        os.environ["HTTPS_PROXY"] = os.environ["https_proxy"]
+
+    def _stop_ssh_tunnel(self):
+        if self.tunnel:
+            self.tunnel.stop()
+            self.tunnel.close()
+            self.tunnel = None  # Убираем ссылку на объект туннеля
+
+        # Удаляем переменные окружения
+        os.environ.pop("https_proxy", None)
+        os.environ.pop("HTTPS_PROXY", None)
+
     def get_video_info(self, video_ids: list[str]) -> list[dict]:
         """
         Retrieve detailed information for a list of videos using the YouTube API.
@@ -108,7 +140,10 @@ class YTApiClient:
                     )
                     .execute()
                 )
+                if self.over_ssh_tunnel:
+                    self._start_ssh_tunnel()
                 response = self._make_request(request_func)
+                self._stop_ssh_tunnel()
                 all_videos_info.extend(response.get("items", []))  # Add video data to the results
             except Exception as e:
                 logger.error(f"Error retrieving video info for chunk {chunk}: {e}")
@@ -238,7 +273,10 @@ class YTApiClient:
             )
             .execute()
         )
+        if self.over_ssh_tunnel:
+            self._start_ssh_tunnel()
         response = self._make_request(request_func)
+        self._stop_ssh_tunnel()
 
         try:
             # Преобразуем ответ в объект ChannelAPIInfoSchema

@@ -19,11 +19,15 @@ class YTMonitorService:
         new_videos_timeout: int = 600,
         history_timeout: int = 4 * 60 * 60,
         new_videos_queue: Optional[Queue] = None,
+        shorts_publish: bool = False,
     ) -> None:
+        if isinstance(channels_list, str):
+            channels_list = [channels_list]
         self._channels_list = channels_list
         self._new_videos_timeout = new_videos_timeout
         self._history_timeout = history_timeout
         self._queue = new_videos_queue  # Очередь для обработки новых видео
+        self._shorts_publish = shorts_publish
 
     def run(
         self, monitor_new: bool = True, monitor_history: bool = True, monitor_video_formats: bool = True
@@ -94,16 +98,15 @@ class YTMonitorService:
 
     async def _process_channel_videos(self, channel_url: str, process_new: bool = False, process_old: bool = False):
         """Обработка новых и старых видео для канала."""
-        yt_dlp_client = YTChannelDownloader(channel_url)
-        api_client = YTApiClient()
-
         # Получение информации о канале через yt-dlp
+        yt_dlp_client = YTChannelDownloader(channel_url)
         ytdlp_channel_info: Optional[ChannelInfoSchema] = yt_dlp_client.get_channel_info()
 
         if not ytdlp_channel_info:
             logger.error(f"Failed to retrieve channel info for {channel_url}. Skipping...")
             return
 
+        api_client = YTApiClient(over_ssh_tunnel=False)
         # Если канала нет в БД, до дополняем о нём информацию через API и добавляем в БД
         if not yt_dlp_client.channel_exist(ytdlp_channel_info.channel_id):
             logger.debug("Channel not found in database! Updating...")
@@ -148,10 +151,13 @@ class YTMonitorService:
         elif process_old:
             videos_to_process = old_videos
 
+        if len(videos_to_process) == 0:
+            logger.info("No videos to process. Skipping...")
+            return
+
         # Получение дополнительной информации о видео через YouTube API
         video_ids = [video.id for video in videos_to_process]
-        if video_ids:
-            api_videos_info = api_client.get_video_info_list(video_ids)
+        api_videos_info = api_client.get_video_info_list(video_ids)
 
         # Объединение данных о видео
         complete_video_list = self._combine_video_info(videos_to_process, api_videos_info)
@@ -174,6 +180,9 @@ class YTMonitorService:
                                 video_url=video.url,
                             )
                         )  # add video to queue for telegram bot
+                    # elif self._shorts_publish:
+                    #     self._queue.put(
+                    #     )
         if process_old and old_videos:
             self._process_old_videos(old_videos)
 

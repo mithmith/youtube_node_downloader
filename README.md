@@ -1,11 +1,11 @@
 # Youtube Parser Downloader
 
-## Overview ✨
+## ✨ Overview ✨
 Youtube Parser Downloader is an open-source project designed for collecting statistical information about YouTube videos, channel monitoring, downloading videos, audio, subtitles, and thumbnails, as well as implementing a number of additional features such as content localization and editing. This tool is intended for researchers, developers, and anyone interested in analyzing YouTube content and its further use.
 
-## README.md 🌐
-- English [README.md](README.md)
-- Русский [README.ru.md](README.ru.md)
+## README.md
+- 🌐 [English README.md](README.md)
+- 🌐 [Русский README.ru.md](README.ru.md)
 
 ## DEPENCIES 💡
 
@@ -17,20 +17,26 @@ Youtube Parser Downloader is an open-source project designed for collecting stat
 
 ## Fast INSTALLATION 🚀
 
+1. Download project:
 ```bash
     git clone https://github.com/mithmith/youtube_node_downloader.git
     cd youtube_node_downloader
 ```
-
-Create file with youtube channel urls `channels_list.json` from `channels_list.json.example`.
-
+2. Create file with youtube channel urls `channels_list.json` from `channels_list.json.example`.
+3. Install dependencies:
 ```bash
     sudo pip3 install -r requirements.txt
-    export TG_BOT_TOKEN=<Your Telegram bot token>
-    export TG_GROUP_ID=<Your target group ID for posting>
-    export TG_GROUP_ID=<Your target group ID for posting>
-    export YOUTUBE_API_KEY=<Your Youtube api key>
-    export YOUTUBE_SECRET_JSON=<secret json file name from Google API board>
+```
+4. Set environment: rename `.env.example` to `.env` and set:
+```environment
+    TG_BOT_TOKEN=<Your Telegram bot token>
+    TG_GROUP_ID=<Your target group ID for posting>
+    TG_GROUP_ID=<Your target group ID for posting>
+    YOUTUBE_API_KEY=<Your Youtube api key>
+    YOUTUBE_SECRET_JSON=<secret json file name from Google API board>
+```
+5. Run project:
+```bash
     python3 -m app
 ```
 
@@ -69,7 +75,7 @@ We welcome any help and offer a wide range of tasks for contribution to the proj
 - Video editing and localization.
 - Integration with external services such as Telegram and Peertube.
 
-## Join the Development
+## Join the Development 👥
 To start working with the project, please familiarize yourself with our participation guides and code of conduct. We aim to create a welcoming and productive community.
 
 ## Contact 🔊

@@ -48,10 +48,13 @@ if __name__ == "__main__":
     channels_list = load_channels_list()
 
     # Инициализируем мониторинг YouTube
-    monitor = YTMonitorService(channels_list=channels_list, new_videos_queue=queue)
+    monitor = YTMonitorService(
+        channels_list=channels_list, new_videos_queue=queue, shorts_publish=settings.run_tg_bot_shorts_publish
+    )
 
     # Запускаем процессы
     monitor_processes = monitor.run(settings.monitor_new, settings.monitor_history, settings.monitor_video_formats)
+    logger.debug(f"TG bot started: {settings.run_tg_bot}")
     if settings.run_tg_bot:
         tg_bot = TelegramBotService(
             bot_token=settings.tg_bot_token,

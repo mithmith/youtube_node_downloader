@@ -29,6 +29,7 @@ SQLAlchemy = "~2.0.28"
 sqlmodel = "~0.0.16"
 psycopg2-binary = "2.9.10"
 python-telegram-bot = "~21.10"
+sshtunnel = "~0.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"

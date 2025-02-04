@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     monitor_history: bool = False
     monitor_video_formats: bool = False
     run_tg_bot: bool = True
+    run_tg_bot_shorts_publish: bool = False
 
     youtube_api_key: str = "youtube_key"
     youtube_secret_json: str = ""
@@ -30,6 +31,11 @@ class Settings(BaseSettings):
     tg_bot_token: str = "TELEGRAM_BOT_TOKEN"
     tg_group_id: str = "group_id"
     tg_admin_id: int = 0
+
+    ssh_host: str = "localhost"
+    ssh_port: int = 22
+    ssh_user: str = "root"
+    ssh_private_key: str = "/root/.ssh/id_rsa"
 
     class Config:
         env_file = ".env"
