@@ -92,6 +92,7 @@ class Video(Base, table=True):
     upload_date: Optional[datetime] = Field(default=None)
     defaultaudiolanguage: Optional[str] = Field(default=None)
     last_update: datetime = Field(default_factory=lambda: datetime.now().replace(microsecond=0))
+    tg_post_date: Optional[datetime] = Field(default=None)
 
     channel: Channel = Relationship(back_populates="videos")
     thumbnails: List["Thumbnail"] = Relationship(back_populates="video")

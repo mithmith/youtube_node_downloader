@@ -10,6 +10,8 @@ from telegram.error import TelegramError
 from telegram.ext import Application
 
 from app.config import settings
+from app.db.base import Session
+from app.db.repository import YoutubeVideoRepository
 from app.integrations.telegram import get_telegram_handlers
 from app.schema import NewVideoSchema
 
@@ -24,6 +26,7 @@ class TelegramBotService:
         self._delay = delay  # Задержка между отправками сообщений с новыми видео
         self._max_retries = 3  # Максимальное количество попыток запуска бота и отправки сообщений
         self._retry_delay = 5  # Задержка между неудачными попытками (в секундах)
+        self._repository = YoutubeVideoRepository(session=Session())
         logger.info("Telegram bot is created")
 
     def run(self):
@@ -110,7 +113,9 @@ class TelegramBotService:
                 )
                 logger.debug(f"Sending message to {self._group_id}:\n{message}")
 
-                await self._send_message_with_retries(bot=bot, chat_id=self._group_id, text=message)
+                await self._send_message_with_retries(
+                    bot=bot, chat_id=self._group_id, text=message, video_id=video.video_id
+                )
 
                 # Задержка между отправками сообщений
                 await asyncio.sleep(self._delay)
@@ -121,7 +126,7 @@ class TelegramBotService:
             except Exception as e:
                 logger.error(f"Ошибка при отправке сообщения: {e}")
 
-    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str):
+    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_id: str):
         """
         Отправляет сообщение в Telegram с заданным числом повторных попыток.
 
@@ -136,6 +141,7 @@ class TelegramBotService:
                     text=text,
                     parse_mode="Markdown",
                 )
+                self._repository.update_tg_post_date(video_id)
                 logger.info("Сообщение успешно отправлено")
                 return  # Успешная отправка, выходим из функции
             except TelegramError as te:

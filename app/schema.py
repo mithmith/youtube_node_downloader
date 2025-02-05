@@ -43,6 +43,14 @@ class NewVideoSchema(BaseModel):
     channel_url: str = ""
     video_title: str = ""
     video_url: str = ""
+    video_id: str = ""
+
+
+class VideoDownloadSchema(BaseModel):
+    file_name: str = ""
+    video_download_path: str = ""
+    video_url: str = ""
+    video_id: str = ""
 
 
 class ChannelInfoSchema(BaseModel):

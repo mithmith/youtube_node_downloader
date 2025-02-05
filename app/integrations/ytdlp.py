@@ -1,3 +1,4 @@
+import asyncio
 import json
 import subprocess
 from pathlib import Path
@@ -11,7 +12,7 @@ from app.config import settings
 from app.db.base import Session
 from app.db.data_table import Video
 from app.db.repository import YoutubeDataRepository
-from app.schema import ChannelInfoSchema, VideoSchema, YTFormatSchema
+from app.schema import ChannelInfoSchema, VideoDownloadSchema, VideoSchema, YTFormatSchema
 
 
 class YTChannelDownloader:
@@ -81,13 +82,21 @@ class YTChannelDownloader:
                     video_list.append(VideoSchema(**entry))
         return video_list, channel_id
 
-    def download_video(self, video_id: str, format: str = "bv+ba/b") -> None:
-        video: Video = self._repository.get_video(video_id)
-        if video:
-            video_path = self._construct_video_path(video_id)
-            command = f'yt-dlp -f "{format}" -o "{video_path}" {video.url}'
-            subprocess.run(command, shell=True, check=True)
-            self._repository.update_video_path(video_id, video_path)
+    @staticmethod
+    async def download_video(video_info: VideoDownloadSchema, format: str = "best[ext=mp4]") -> None:
+        command = f'yt-dlp -f "{format}" -o "{video_info.video_download_path}" {video_info.video_url}'
+        logger.debug("Downloading video: {}".format(video_info.video_url))
+        logger.debug("Executing command: {}".format(command))
+        process = await asyncio.create_subprocess_shell(
+            command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        _, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            logger.info(f"Видео скачано: {video_info.video_download_path}")
+        else:
+            logger.error(f"Ошибка скачивания видео: {stderr.decode().strip()}")
 
     def download_thumbnail(self, video_id: str) -> None:
         video: Video = self._repository.get_video(video_id)

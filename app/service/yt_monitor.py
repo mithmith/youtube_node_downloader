@@ -1,15 +1,18 @@
 import asyncio
 from multiprocessing import Process, Queue
+from os.path import join
+from queue import Empty
 from typing import Optional
 
 from loguru import logger
 
+from app.config import settings
 from app.db.base import Session
 from app.db.data_table import Channel, ChannelHistory, Thumbnail
 from app.db.repository import YoutubeDataRepository
 from app.integrations.ytapi import YTApiClient
 from app.integrations.ytdlp import YTChannelDownloader
-from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, NewVideoSchema, VideoSchema
+from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, NewVideoSchema, VideoDownloadSchema, VideoSchema
 
 
 class YTMonitorService:
@@ -28,6 +31,7 @@ class YTMonitorService:
         self._history_timeout = history_timeout
         self._queue = new_videos_queue  # Очередь для обработки новых видео
         self._shorts_publish = shorts_publish
+        self._download_queue = Queue()
 
     def run(
         self, monitor_new: bool = True, monitor_history: bool = True, monitor_video_formats: bool = True
@@ -49,6 +53,11 @@ class YTMonitorService:
             video_formats_process = Process(target=self._start_async_loop, args=(self._update_video_formats,))
             processes.append(video_formats_process)
             video_formats_process.start()
+
+        if self._shorts_publish:
+            shorts_publish_process = Process(target=self._start_async_loop, args=(self._shorts_downloader,))
+            processes.append(shorts_publish_process)
+            shorts_publish_process.start()
 
         return processes
 
@@ -95,6 +104,21 @@ class YTMonitorService:
                 await asyncio.sleep(5)
             logger.info(f"(FORMATS) Waiting for {self._history_timeout} seconds")
             await asyncio.sleep(self._history_timeout)
+
+    async def _shorts_downloader(self, delay: int = 5):
+        while True:
+            try:
+                video: VideoDownloadSchema = self._download_queue.get(block=False, timeout=5)
+                logger.debug(f"video={video}")
+                await YTChannelDownloader.download_video(video)
+                # Задержка между скачиванием файлов
+                await asyncio.sleep(delay)
+            except Empty:
+                # Если очередь пуста после таймаута, ничего не делаем и продолжаем ждать
+                await asyncio.sleep(delay)
+                continue
+            except Exception as e:
+                logger.error(f"Ошибка при отправке сообщения: {e}")
 
     async def _process_channel_videos(self, channel_url: str, process_new: bool = False, process_old: bool = False):
         """Обработка новых и старых видео для канала."""
@@ -178,11 +202,26 @@ class YTMonitorService:
                                 channel_url=ytdlp_channel_info.channel_url,
                                 video_title=video.title,
                                 video_url=video.url,
+                                video_id=video.id,
                             )
                         )  # add video to queue for telegram bot
-                    # elif self._shorts_publish:
-                    #     self._queue.put(
-                    #     )
+                    elif self._shorts_publish:
+                        video_file_name = (
+                            (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
+                            + "_shorts_"
+                            + video.id
+                            + ".mp4"
+                        )
+                        self._download_queue.put(
+                            VideoDownloadSchema(
+                                file_name=video_file_name,
+                                video_download_path=join(
+                                    settings.storage_path, settings.shorts_download_path, video_file_name
+                                ),
+                                video_url=video.url,
+                                video_id=video.id,
+                            )
+                        )
         if process_old and old_videos:
             self._process_old_videos(old_videos)
 

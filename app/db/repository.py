@@ -554,7 +554,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         else:
             logger.error(f"Video with ID {video_schema.id} not found in the database.")
 
-    def update_video_path(self, video_id: UUID, video_path: Path) -> None:
+    def update_video_path(self, video_id: str, video_path: Path) -> None:
         """
         Updates the file path where the video is stored.
 
@@ -567,7 +567,7 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             ID exists, its 'video_path' attribute is updated to the new path. The method commits the change
             to the database. If the video does not exist, it logs a warning.
         """
-        video: Video = self._session.query(Video).filter_by(id=video_id).first()
+        video: Video = self._session.query(Video).filter_by(video_id=video_id).first()
         if video:
             video.video_path = str(video_path)
             self._session.commit()
@@ -680,3 +680,15 @@ class YoutubeDataRepository(BaseRepository[Channel]):
             except IntegrityError as e:
                 self._session.rollback()  # Rollback transaction in case of an error
                 logger.error(f"Error during bulk add tags: {e}")
+
+
+class YoutubeVideoRepository(BaseRepository[Video]):
+    model = Video
+
+    def update_tg_post_date(self, video_id: str):
+        """Обновляет поле tg_post_date для видео после успешной отправки в Telegram."""
+        with self._session.begin():
+            video: Video = self._session.query(Video).filter(Video.video_id == video_id).first()
+            if video:
+                video.tg_post_date = datetime.now().replace(microsecond=0)
+                self._session.commit()
