@@ -43,13 +43,17 @@ def load_channels_list(file_path: str = "channels_list.json") -> list[str]:
 
 if __name__ == "__main__":
     # Общая очередь для передачи данных между сервисами
-    queue = Queue()
+    news_queue = Queue()
+    if settings.run_tg_bot_shorts_publish:
+        shorts_queue = Queue()
+    else:
+        shorts_queue = None
     # Загружаем список каналов
     channels_list = load_channels_list()
 
     # Инициализируем мониторинг YouTube
     monitor = YTMonitorService(
-        channels_list=channels_list, new_videos_queue=queue, shorts_publish=settings.run_tg_bot_shorts_publish
+        channels_list=channels_list[-1], new_videos_queue=news_queue, shorts_publish=settings.run_tg_bot_shorts_publish
     )
 
     # Запускаем процессы
@@ -59,7 +63,8 @@ if __name__ == "__main__":
         tg_bot = TelegramBotService(
             bot_token=settings.tg_bot_token,
             group_id=settings.tg_group_id,
-            queue=queue,
+            msg_queue=news_queue,
+            shorts_queue=shorts_queue,
         )
         bot_process = tg_bot.run()
         bot_process.join()

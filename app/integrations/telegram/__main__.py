@@ -5,7 +5,7 @@ from telegram.ext import Application, BaseHandler, CommandHandler, MessageHandle
 
 from app.config import settings
 from app.integrations.telegram.commands import start, start_command
-from app.integrations.telegram.messages import handle_message, send_test_message
+from app.integrations.telegram.messages import handle_message, send_test_message, send_test_shorts_video
 
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.INFO)
@@ -17,7 +17,7 @@ def get_telegram_handlers(test_mode: bool = False) -> list[BaseHandler]:
     if test_mode:
         return [
             CommandHandler("start", start),
-            MessageHandler(filters.TEXT & ~filters.COMMAND, send_test_message),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, send_test_shorts_video),
         ]
     return [
         CommandHandler("start", start_command),

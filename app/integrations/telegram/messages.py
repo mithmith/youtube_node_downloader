@@ -1,9 +1,14 @@
+import os
+
 from loguru import logger
 from telegram import Message, Update
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from app.config import settings
 from app.integrations.telegram.utils import extract_original_user_id, format_telegram_message
+
+MAX_TELEGRAM_VIDEO_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
 async def send_test_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -22,6 +27,37 @@ async def send_test_message(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     # Подтверждение отправки пользователю
     await update.message.reply_text("Сообщение отправлено в группу.")
+
+
+async def send_test_shorts_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    video_path = "../test_shorts_video_w6CxKyVLtmo.mp4"
+    channel_name = "Это базис"
+    channel_url = "https://www.youtube.com/@eto_basis"
+    video_title = "Почему власть боится бумажных стаканчиков и как это связано с Богородицей?"
+    video_url = "https://www.youtube.com/shorts/w6CxKyVLtmo"
+
+    # Проверяем размер видео
+    if os.path.getsize(video_path) > MAX_TELEGRAM_VIDEO_SIZE:
+        logger.error(
+            f"Видео {video_url} слишком большое для Telegram! ({os.path.getsize(video_path) / (1024 * 1024):.2f} MB)"
+        )
+        return
+
+    await context.bot.send_video(
+        chat_id=settings.tg_admin_id,
+        video=open(video_path, "rb"),
+        caption=format_shorts_message(channel_name, channel_url, video_title, video_url),
+        parse_mode="Markdown",
+    )
+
+
+def format_shorts_message(channel_name: str, channel_url: str, video_title: str, video_url: str):
+    """Форматирование сообщения в Markdown формате."""
+    return (
+        f"🎬 *Новое видео!* 🔥\n"
+        f'📺 На канале "[{channel_name}]({channel_url})"\n'
+        f"🎥 [{video_title}]({video_url})\n" + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
+    )
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import time
 from asyncio import AbstractEventLoop
 from multiprocessing import Process, Queue
@@ -8,25 +9,27 @@ from loguru import logger
 from telegram import Bot, Update
 from telegram.error import TelegramError
 from telegram.ext import Application
+from telegram.helpers import escape_markdown
 
 from app.config import settings
 from app.db.base import Session
 from app.db.repository import YoutubeVideoRepository
 from app.integrations.telegram import get_telegram_handlers
-from app.schema import NewVideoSchema
+from app.schema import NewVideoSchema, VideoDownloadSchema
 
 
 class TelegramBotService:
     """Класс для публикации сообщений в Telegram."""
 
-    def __init__(self, bot_token: str, group_id: str, queue: Queue, delay: int = 30):
+    def __init__(self, bot_token: str, group_id: str, msg_queue: Queue, shorts_queue: Queue = None, delay: int = 30):
         self._bot_token = bot_token
         self._group_id = group_id
-        self._queue = queue
+        self._messages_queue = msg_queue
+        self._shorts_queue = shorts_queue
         self._delay = delay  # Задержка между отправками сообщений с новыми видео
         self._max_retries = 3  # Максимальное количество попыток запуска бота и отправки сообщений
         self._retry_delay = 5  # Задержка между неудачными попытками (в секундах)
-        self._repository = YoutubeVideoRepository(session=Session())
+        # self._repository = YoutubeVideoRepository(session=Session())
         logger.info("Telegram bot is created")
 
     def run(self):
@@ -98,24 +101,22 @@ class TelegramBotService:
 
     async def _publish_messages(self, bot: Bot):
         """Публикация сообщений из очереди каждые N секунд."""
-        await asyncio.sleep(10)
+        await asyncio.sleep(5)
         logger.info("News feed Bot is running...")
 
         while True:
             try:
                 # Получаем сообщение из очереди
                 logger.debug("Telegram bot is checking messages queue")
-                video: NewVideoSchema = self._queue.get(block=False, timeout=5)  # Ждём сообщение
+                video: NewVideoSchema = self._messages_queue.get(block=False, timeout=5)  # Ждём сообщение
                 logger.debug(f"video={video}")
 
-                message = self._format_telegram_message(
+                message = self._format_newvideo_message(
                     video.channel_name, video.channel_url, video.video_title, video.video_url
                 )
                 logger.debug(f"Sending message to {self._group_id}:\n{message}")
 
-                await self._send_message_with_retries(
-                    bot=bot, chat_id=self._group_id, text=message, video_id=video.video_id
-                )
+                await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
 
                 # Задержка между отправками сообщений
                 await asyncio.sleep(self._delay)
@@ -126,7 +127,37 @@ class TelegramBotService:
             except Exception as e:
                 logger.error(f"Ошибка при отправке сообщения: {e}")
 
-    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_id: str):
+    async def _publish_shorts_videos(self, bot: Bot):
+        """Публикация shorts из очереди каждые N секунд."""
+        if self._shorts_queue is None:
+            return
+        await asyncio.sleep(5)
+        logger.info("Shorts publisher Bot is running...")
+
+        while True:
+            try:
+                # Получаем сообщение из очереди
+                logger.debug("Telegram bot is checking messages queue")
+                video: VideoDownloadSchema = self._shorts_queue.get(block=False, timeout=5)  # Ждём сообщение
+                logger.debug(f"video={video}")
+
+                message = self._format_shorts_message(
+                    video.channel_name, video.channel_url, video.video_title, video.video_url
+                )
+                logger.debug(f"Sending message to {self._group_id}:\n{message}")
+
+                await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
+
+                # Задержка между отправками сообщений
+                await asyncio.sleep(self._delay)
+            except Empty:
+                # Если очередь пуста после таймаута, ничего не делаем и продолжаем ждать
+                await asyncio.sleep(self._delay)
+                continue
+            except Exception as e:
+                logger.error(f"Ошибка при отправке сообщения: {e}")
+
+    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_path: str = None):
         """
         Отправляет сообщение в Telegram с заданным числом повторных попыток.
 
@@ -136,13 +167,22 @@ class TelegramBotService:
         """
         for attempt in range(1, self._max_retries + 1):
             try:
-                await bot.send_message(
-                    chat_id=chat_id,
-                    text=text,
-                    parse_mode="Markdown",
-                )
-                self._repository.update_tg_post_date(video_id)
-                logger.info("Сообщение успешно отправлено")
+                if video_path and os.path.isfile(video_path):
+                    await bot.send_video(
+                        chat_id=chat_id,
+                        video=open(video_path, "rb"),
+                        caption=text,
+                        parse_mode="Markdown",
+                    )
+                    logger.info("Видео успешно отправлено")
+                elif text:
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text=text,
+                        parse_mode="Markdown",
+                    )
+                    # self._repository.update_tg_post_date(video_id)
+                    logger.info("Сообщение успешно отправлено")
                 return  # Успешная отправка, выходим из функции
             except TelegramError as te:
                 logger.error(f"Telegram API error (попытка {attempt} из {self._max_retries}): {te}")
@@ -159,6 +199,15 @@ class TelegramBotService:
 
         logger.error("Не удалось отправить сообщение после всех попыток")
 
-    def _format_telegram_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
+    def _format_newvideo_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
         return f'**[{video_title}]({video_url})**\nНа канале "[{channel_name}]({channel_url})" вышло новое видео:'
+
+    def _format_shorts_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
+        """Форматирование сообщения в Markdown формате."""
+        return (
+            f"🎬 *Новое видео!* 🔥\n"
+            f'📺 На канале "[{channel_name}]({channel_url})"\n'
+            f"🎥 [{video_title}]({video_url})\n"
+            + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
+        )
