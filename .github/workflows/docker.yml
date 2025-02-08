@@ -6,10 +6,6 @@ on:
       - "v*" # Триггер для версии, например, v1.0.0
   workflow_dispatch: # Ручной запуск workflow
 
-  env:
-    REGISTRY: ghcr.io
-    IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   build-and-push:
     name: Build and Push Docker Image
@@ -22,7 +18,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: $ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
