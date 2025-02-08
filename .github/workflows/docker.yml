@@ -11,7 +11,7 @@ env:
 jobs:
     build:
         runs-on: ubuntu-latest
-        
+
         permissions:
           contents: read
           packages: write
@@ -36,6 +36,7 @@ jobs:
                 images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             
             - name: Build and push Docker image
+              id: push
               uses: docker/build-push-action@v5.3.0
               with:
                 context: .
