@@ -6,6 +6,10 @@ on:
       - "v*" # Триггер для версии, например, v1.0.0
   workflow_dispatch: # Ручной запуск workflow
 
+  env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   build-and-push:
     name: Build and Push Docker Image
