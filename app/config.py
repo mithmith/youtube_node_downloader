@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     youtube_api_key: str = "youtube_key"
     youtube_secret_json: str = ""
+    youtube_service_secret_json: str = ""
 
     tg_bot_token: str = "TELEGRAM_BOT_TOKEN"
     tg_group_id: str = "group_id"

@@ -8,6 +8,7 @@ import isodate
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from googleapiclient.errors import HttpError
 from loguru import logger
 from sshtunnel import SSHTunnelForwarder
@@ -38,30 +39,38 @@ class YTApiClient:
         self._stop_ssh_tunnel()
 
     def _get_credentials(self):
-        """Получить или обновить учетные данные."""
+        """Получить учетные данные. Использует сервисный аккаунт, если доступен."""
+        
+        # 1️⃣ **Попытка загрузить сервисный аккаунт (если есть)**
+        if os.path.exists(settings.youtube_service_secret_json):
+            credentials = service_account.Credentials.from_service_account_file(
+                settings.youtube_service_secret_json,
+                scopes=["https://www.googleapis.com/auth/youtube.readonly"]
+            )
+            return credentials
+        
         credentials = None
 
-        # Load credentials from file if available
+        # 2️⃣ **Попытка загрузить OAuth 2.0 токены (если сервисный аккаунт отсутствует)**
         if os.path.exists(self._credentials_file):
             with open(self._credentials_file, "rb") as token:
                 credentials = pickle.load(token)
 
-        # Check if credentials are valid
+        # 3️⃣ **Проверка валидности токена**
         if not credentials or not credentials.valid:
             try:
                 if credentials and credentials.expired and credentials.refresh_token:
-                    # Refresh existing credentials
                     credentials.refresh(Request())
                 else:
-                    # Perform full authorization
                     flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
                     credentials = flow.run_local_server(port=0)
 
-                # Save credentials for future use
+                # Сохранение токена
                 with open(self._credentials_file, "wb") as token:
                     pickle.dump(credentials, token)
+
             except RefreshError:
-                logger.error("Refresh token invalid or expired. Removing old credentials.")
+                logger.error("Ошибка обновления токена. Удаляем старые учетные данные.")
                 if os.path.exists(self._credentials_file):
                     os.remove(self._credentials_file)
                 flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
