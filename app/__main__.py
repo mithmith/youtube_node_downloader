@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     # Инициализируем мониторинг YouTube
     monitor = YTMonitorService(
-        channels_list=channels_list[-1], new_videos_queue=news_queue, shorts_publish=settings.run_tg_bot_shorts_publish
+        channels_list=channels_list[-1], new_videos_queue=news_queue, shorts_videos_queue=shorts_queue
     )
 
     # Запускаем процессы

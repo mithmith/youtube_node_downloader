@@ -7,8 +7,8 @@ import googleapiclient.discovery
 import isodate
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2 import service_account
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError
 from loguru import logger
 from sshtunnel import SSHTunnelForwarder
@@ -25,14 +25,14 @@ class YTApiClient:
         # Disable OAuthlib's HTTPS verification when running locally.
         # *DO NOT* leave this option enabled in production.
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-        self.scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
+        self._scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
         self.api_service_name = "youtube"
         self.api_version = "v3"
         self._client_secrets_file = settings.youtube_secret_json
         self._repository = YoutubeDataRepository(session=Session())
         self._credentials_file = f"google-oauth2.pickle"
-        self.over_ssh_tunnel = over_ssh_tunnel
-        self.tunnel = None
+        self._over_ssh_tunnel = over_ssh_tunnel
+        self._tunnel = None
 
     def __del__(self):
         """Закрывает SSH-туннель и очищает переменные окружения."""
@@ -40,29 +40,28 @@ class YTApiClient:
 
     def _get_credentials(self):
         """Получить учетные данные. Использует сервисный аккаунт, если доступен."""
-        
-        # 1️⃣ **Попытка загрузить сервисный аккаунт (если есть)**
+
+        # 1️. Попытка загрузить сервисный аккаунт (если есть)
         if os.path.exists(settings.youtube_service_secret_json):
             credentials = service_account.Credentials.from_service_account_file(
-                settings.youtube_service_secret_json,
-                scopes=["https://www.googleapis.com/auth/youtube.readonly"]
+                settings.youtube_service_secret_json, scopes=self._scopes
             )
             return credentials
-        
+
         credentials = None
 
-        # 2️⃣ **Попытка загрузить OAuth 2.0 токены (если сервисный аккаунт отсутствует)**
+        # 2️. Попытка загрузить OAuth 2.0 токены (если сервисный аккаунт отсутствует)
         if os.path.exists(self._credentials_file):
             with open(self._credentials_file, "rb") as token:
                 credentials = pickle.load(token)
 
-        # 3️⃣ **Проверка валидности токена**
+        # 3️. Проверка валидности токена
         if not credentials or not credentials.valid:
             try:
                 if credentials and credentials.expired and credentials.refresh_token:
                     credentials.refresh(Request())
                 else:
-                    flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
+                    flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self._scopes)
                     credentials = flow.run_local_server(port=0)
 
                 # Сохранение токена
@@ -73,7 +72,7 @@ class YTApiClient:
                 logger.error("Ошибка обновления токена. Удаляем старые учетные данные.")
                 if os.path.exists(self._credentials_file):
                     os.remove(self._credentials_file)
-                flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self.scopes)
+                flow = InstalledAppFlow.from_client_secrets_file(self._client_secrets_file, self._scopes)
                 credentials = flow.run_local_server(port=0)
                 with open(self._credentials_file, "wb") as token:
                     pickle.dump(credentials, token)
@@ -97,24 +96,24 @@ class YTApiClient:
 
     def _start_ssh_tunnel(self):
         """Запускает SSH-туннель и настраивает https_proxy."""
-        self.tunnel = SSHTunnelForwarder(
+        self._tunnel = SSHTunnelForwarder(
             (settings.ssh_host, settings.ssh_port),
             ssh_username=settings.ssh_user,
             ssh_pkey=settings.ssh_private_key,
             remote_bind_address=("www.googleapis.com", 443),
             local_bind_address=("127.0.0.1", 8443),
         )
-        self.tunnel.start()
+        self._tunnel.start()
 
         # Перенаправляем HTTPS-запросы через туннель
-        os.environ["https_proxy"] = f"http://127.0.0.1:{self.tunnel.local_bind_port}"
+        os.environ["https_proxy"] = f"http://127.0.0.1:{self._tunnel.local_bind_port}"
         os.environ["HTTPS_PROXY"] = os.environ["https_proxy"]
 
     def _stop_ssh_tunnel(self):
-        if self.tunnel:
-            self.tunnel.stop()
-            self.tunnel.close()
-            self.tunnel = None  # Убираем ссылку на объект туннеля
+        if self._tunnel:
+            self._tunnel.stop()
+            self._tunnel.close()
+            self._tunnel = None  # Убираем ссылку на объект туннеля
 
         # Удаляем переменные окружения
         os.environ.pop("https_proxy", None)
@@ -149,7 +148,7 @@ class YTApiClient:
                     )
                     .execute()
                 )
-                if self.over_ssh_tunnel:
+                if self._over_ssh_tunnel:
                     self._start_ssh_tunnel()
                 response = self._make_request(request_func)
                 self._stop_ssh_tunnel()
@@ -241,7 +240,7 @@ class YTApiClient:
                     defaultAudioLanguage = item.get("snippet", {}).get("defaultAudioLanguage", None)
 
                     # Проверка существования видео в базе данных
-                    if not self._repository.get_video(video_id):
+                    if not self._repository.get_video_by_id(video_id):
                         logger.warning(f"Video with ID {video_id} not found in the database. Skipping update.")
                         continue
 
@@ -282,7 +281,7 @@ class YTApiClient:
             )
             .execute()
         )
-        if self.over_ssh_tunnel:
+        if self._over_ssh_tunnel:
             self._start_ssh_tunnel()
         response = self._make_request(request_func)
         self._stop_ssh_tunnel()
