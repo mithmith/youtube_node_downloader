@@ -84,7 +84,7 @@ class YTChannelDownloader:
 
     @staticmethod
     async def download_video(video_info: VideoDownloadSchema, format: str = "best[ext=mp4]") -> None:
-        command = f'yt-dlp -f "{format}" -o "{video_info.video_download_path}" {video_info.video_url}'
+        command = f'yt-dlp -f "{format}" -o "{video_info.video_file_download_path}" {video_info.video_url}'
         logger.debug("Downloading video: {}".format(video_info.video_url))
         logger.debug("Executing command: {}".format(command))
         process = await asyncio.create_subprocess_shell(
@@ -94,7 +94,7 @@ class YTChannelDownloader:
         _, stderr = await process.communicate()
 
         if process.returncode == 0:
-            logger.info(f"Видео скачано: {video_info.video_download_path}")
+            logger.info(f"Видео скачано: {video_info.video_file_download_path}")
         else:
             logger.error(f"Ошибка скачивания видео: {stderr.decode().strip()}")
 
