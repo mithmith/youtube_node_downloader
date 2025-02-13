@@ -108,14 +108,14 @@ class TelegramBotService:
         while True:
             try:
                 # Получаем сообщение из очереди
-                logger.debug("(Telegram Bot) Checking messages queue...")
+                logger.debug("(TGBot) Checking messages queue...")
                 video: NewVideoSchema = self._messages_queue.get(block=False, timeout=5)  # Ждём сообщение
                 logger.debug(f"video={video}")
 
                 message = self._format_newvideo_message(
                     video.channel_name, video.channel_url, video.video_title, video.video_url
                 )
-                logger.debug(f"(Telegram Bot) Sending message to {self._group_id}:\n{message}")
+                logger.debug(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
 
@@ -126,7 +126,7 @@ class TelegramBotService:
                 await asyncio.sleep(self._delay)
                 continue
             except Exception as e:
-                logger.error(f"(Telegram Bot) Ошибка при отправке сообщения: {e}")
+                logger.error(f"(TGBot) Ошибка при отправке сообщения: {e}")
 
     async def _publish_shorts_videos(self, bot: Bot):
         """Публикация shorts из очереди каждые N секунд."""
@@ -138,14 +138,14 @@ class TelegramBotService:
         while True:
             try:
                 # Получаем сообщение из очереди
-                logger.debug("(Telegram Bot) Checking shorts queue...")
+                logger.debug("(TGBot) Checking shorts queue...")
                 video: VideoDownloadSchema = self._shorts_queue.get(block=False, timeout=5)  # Ждём сообщение
                 logger.debug(f"video={video}")
 
                 message = self._format_shorts_message(
                     video.channel_name, video.channel_url, video.video_title, video.video_url
                 )
-                logger.debug(f"(Telegram Bot) Sending message to {self._group_id}:\n{message}")
+                logger.debug(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(
                     bot, self._group_id, message, video_path=video.video_file_download_path
@@ -158,7 +158,7 @@ class TelegramBotService:
                 await asyncio.sleep(self._delay)
                 continue
             except Exception as e:
-                logger.error(f"(Telegram Bot) Ошибка при отправке сообщения: {e}")
+                logger.error(f"(TGBot) Ошибка при отправке сообщения: {e}")
 
     async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_path: str = None):
         """
@@ -176,8 +176,12 @@ class TelegramBotService:
                         video=open(video_path, "rb"),
                         caption=text,
                         parse_mode="Markdown",
+                        pool_timeout=180,
+                        read_timeout=180,
+                        write_timeout=180,
+                        connect_timeout=180,
                     )
-                    logger.info("(Telegram Bot) Видео успешно отправлено")
+                    logger.info("(TGBot) Видео успешно отправлено")
                 elif text:
                     await bot.send_message(
                         chat_id=chat_id,
@@ -185,12 +189,12 @@ class TelegramBotService:
                         parse_mode="Markdown",
                     )
                     # self._repository.update_tg_post_date(video_id)
-                    logger.info("(Telegram Bot) Сообщение успешно отправлено")
+                    logger.info("(TGBot) Сообщение успешно отправлено")
                 return  # Успешная отправка, выходим из функции
-            except TelegramError as te:
-                logger.error(f"Telegram API error (попытка {attempt} из {self._max_retries}): {te}")
             except asyncio.TimeoutError:
                 logger.error(f"Timeout error при отправке сообщения (попытка {attempt} из {self._max_retries})")
+            except TelegramError as te:
+                logger.error(f"Telegram API error (попытка {attempt} из {self._max_retries}): {te}")
             except Exception as e:
                 logger.error(
                     f"Неизвестная ошибка при отправке сообщения (попытка {attempt} из {self._max_retries}): {e}"
@@ -205,9 +209,9 @@ class TelegramBotService:
     def _format_newvideo_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
         return (
-            f"**[{escape_markdown(video_title)}]({video_url})**\n"
-            + escape_markdown(f'\n#Videos #{channel_name.replace(" ", "_")}')
-            + f'На канале "[{escape_markdown(channel_name)}]({channel_url})" вышло новое видео:'
+            f"🎥 **[{escape_markdown(video_title)}]({video_url})**\n"
+            + escape_markdown(f"#{channel_name.replace(' ', '_')} #Videos\n")
+            + f"На канале «[{escape_markdown(channel_name)}]({channel_url})» вышло новое видео:"
         )
 
     def _format_shorts_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
@@ -216,5 +220,5 @@ class TelegramBotService:
             f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
             f"🎬 Новое видео!"
             f" На канале «[{escape_markdown(channel_name)}]({channel_url})»\n"
-            + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
+            + escape_markdown(f"#Shorts #YouTube #{channel_name.replace(' ', '_')}")
         )

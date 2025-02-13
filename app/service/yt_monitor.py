@@ -198,7 +198,7 @@ class YTMonitorService:
         )
 
         if process_new and new_videos:
-            # self._process_new_videos(new_videos, channel_id)
+            self._process_new_videos(new_videos, channel_id)
 
             if self._queue is not None:  # Добавление сообщений в очередь на публикацию
                 for video in new_videos:

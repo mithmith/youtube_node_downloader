@@ -55,8 +55,8 @@ def format_shorts_message(channel_name: str, channel_url: str, video_title: str,
     """Форматирование сообщения в Markdown формате."""
     return (
         f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
-        f"🎬 *Новое видео!*"
-        f" На канале «[{escape_markdown(channel_name)}]({channel_url})»\n"
+        f'📺 На канале "[{escape_markdown(channel_name)}]({channel_url})" '
+        f"🎬🔥 *Новое видео!*\n"
         + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
     )
 
