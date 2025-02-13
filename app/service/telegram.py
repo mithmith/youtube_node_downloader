@@ -203,7 +203,8 @@ class TelegramBotService:
         """Форматирование сообщения в Markdown формате."""
         return (
             f"**[{escape_markdown(video_title)}]({video_url})**\n"
-            f'На канале "[{escape_markdown(channel_name)}]({channel_url})" вышло новое видео:'
+            + escape_markdown(f'\n#Videos #{channel_name.replace(" ", "_")}')
+            + f'На канале "[{escape_markdown(channel_name)}]({channel_url})" вышло новое видео:'
         )
 
     def _format_shorts_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
