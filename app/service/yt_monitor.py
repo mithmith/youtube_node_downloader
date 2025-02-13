@@ -1,6 +1,6 @@
 import asyncio
 from multiprocessing import Process, Queue
-from os.path import join
+from pathlib import Path
 from queue import Empty
 from typing import Optional
 
@@ -30,7 +30,8 @@ class YTMonitorService:
         self._new_videos_timeout = new_videos_timeout
         self._history_timeout = history_timeout
         self._queue = new_videos_queue  # Очередь для обработки новых видео
-        self._download_queue = shorts_videos_queue
+        self._shorts_publish_queue = shorts_videos_queue
+        self._download_queue = Queue()
         self._shorts_publish = settings.run_tg_bot_shorts_publish
 
     def run(
@@ -106,11 +107,14 @@ class YTMonitorService:
             await asyncio.sleep(self._history_timeout)
 
     async def _shorts_downloader(self, delay: int = 5):
+        logger.info("Starting shorts video downloader...")
         while True:
             try:
                 video: VideoDownloadSchema = self._download_queue.get(block=False, timeout=5)
-                logger.debug(f"video={video}")
+                logger.debug(f"VideoDownloadSchema={video.model_dump()}")
                 await YTChannelDownloader.download_video(video)
+                logger.debug("Adding shorts info into queue...")
+                self._shorts_publish_queue.put(video)
                 # Задержка между скачиванием файлов
                 await asyncio.sleep(delay)
             except Empty:
@@ -194,11 +198,11 @@ class YTMonitorService:
         )
 
         if process_new and new_videos:
-            self._process_new_videos(new_videos, channel_id)
+            # self._process_new_videos(new_videos, channel_id)
 
             if self._queue is not None:  # Добавление сообщений в очередь на публикацию
                 for video in new_videos:
-                    if video.url.find("shorts") == -1:  # исключаем пока шортсы из публикации
+                    if video.url.find("shorts") == -1:  # исключаем shorts videos
                         self._queue.put(
                             NewVideoSchema(
                                 channel_name=ytdlp_channel_info.channel,
@@ -209,7 +213,12 @@ class YTMonitorService:
                             )
                         )  # add video to queue for telegram bot
                     elif self._shorts_publish:
-                        channel_name = ytdlp_channel_info.original_url or ytdlp_channel_info.channel
+                        channel_name = ytdlp_channel_info.id.replace("@", "") or ytdlp_channel_info.channel.replace(
+                            " ", "_"
+                        )
+                        new_shorts_path = self._generate_shorts_download_path(channel_name, video.id)
+                        logger.info(f"Got new shorts ({video.id})!")
+                        logger.debug(f"Path is: {new_shorts_path}")
                         self._download_queue.put(
                             VideoDownloadSchema(
                                 channel_name=ytdlp_channel_info.channel,
@@ -217,7 +226,7 @@ class YTMonitorService:
                                 video_title=video.title,
                                 video_url=video.url,
                                 video_id=video.id,
-                                video_file_path=self._generate_shorts_download_path(channel_name, video.id),
+                                video_file_download_path=new_shorts_path,
                             )
                         )
         if process_old and old_videos:
@@ -323,10 +332,12 @@ class YTMonitorService:
 
     def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
         # (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
-        video_file_name = f"{channel_name}_shorts_{video_id}.{format}"
-        return join(settings.storage_path, settings.shorts_download_path, video_file_name)
+        video_file_name = f"{channel_name}_{video_id}.{format}"
+        short_download_path = Path(settings.storage_path) / settings.shorts_download_path
+        return str(short_download_path / video_file_name)
 
     def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
         # (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
-        video_file_name = f"{channel_name}_videos_{video_id}.{format}"
-        return join(settings.storage_path, settings.video_download_path, video_file_name)
+        video_file_name = f"{channel_name}_{video_id}.{format}"
+        video_download_path = Path(settings.storage_path) / settings.video_download_path
+        return str(video_download_path / video_file_name)

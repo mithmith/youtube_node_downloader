@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -8,9 +8,9 @@ class Settings(BaseSettings):
     app_port: int = 9191
 
     storage_path: str = "/mnt/volume"
-    video_download_path: str = "/videos"
-    shorts_download_path: str = "/shorts"
-    thumbnail_download_path: str = "/videos/thumbnail"
+    video_download_path: str = "videos"
+    shorts_download_path: str = "shorts"
+    thumbnail_download_path: str = "videos/thumbnail"
 
     db_host: str = "localhost"
     db_port: int = 5432
@@ -38,9 +38,11 @@ class Settings(BaseSettings):
     ssh_user: str = "root"
     ssh_private_key: str = "/root/.ssh/id_rsa"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     @property
     def database_url(self) -> str:

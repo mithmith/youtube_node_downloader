@@ -54,9 +54,10 @@ async def send_test_shorts_video(update: Update, context: ContextTypes.DEFAULT_T
 def format_shorts_message(channel_name: str, channel_url: str, video_title: str, video_url: str):
     """Форматирование сообщения в Markdown формате."""
     return (
-        f"🎬 *Новое видео!* 🔥\n"
-        f'📺 На канале "[{channel_name}]({channel_url})"\n'
-        f"🎥 [{video_title}]({video_url})\n" + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
+        f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
+        f"🎬 *Новое видео!*"
+        f" На канале «[{escape_markdown(channel_name)}]({channel_url})»\n"
+        + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
     )
 
 

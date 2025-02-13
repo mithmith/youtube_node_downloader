@@ -84,6 +84,10 @@ class YTChannelDownloader:
 
     @staticmethod
     async def download_video(video_info: VideoDownloadSchema, format: str = "best[ext=mp4]") -> None:
+        if Path(video_info.video_file_download_path).exists():
+            logger.info(f"Видео уже скачано: {video_info.video_file_download_path}")
+            return
+
         command = f'yt-dlp -f "{format}" -o "{video_info.video_file_download_path}" {video_info.video_url}'
         logger.debug("Downloading video: {}".format(video_info.video_url))
         logger.debug("Executing command: {}".format(command))
