@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     ssh_user: str = "root"
     ssh_private_key: str = "/root/.ssh/id_rsa"
 
-    log_lvl: str = "INFO"
+    log_lvl: str = "DEBUG"
     log_dir: str = "logs"
     log_to_file: bool = True
 
@@ -59,15 +59,22 @@ class Settings(BaseSettings):
 
 
 @lru_cache()
-def get_logger(settings: Settings):
+def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):
+    log_format_console = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> "
+        "| <level>{level:<8}</level> "
+        "| <cyan>{file.name}:{line}</cyan> - <level>{message}</level>"
+    )
+    log_format_file = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level:<8} | {file.name}:{line} - {message}"
+    
     log.remove()
-    log.add(sys.stderr, level=settings.log_lvl, format="{time} | {level} | {message}", enqueue=True)
-    if settings.log_to_file:
-        os.makedirs(settings.log_dir, exist_ok=True)
+    log.add(sys.stderr, level=log_lvl, format=log_format_console, colorize=True, enqueue=True)
+    if log_to_file:
+        os.makedirs(log_dir, exist_ok=True)
         log.add(  # Example log file name: logs/log_2024-02-13.log
-            f"{settings.log_dir}/log_{{time:YYYY-MM-DD}}.log",
+            f"{log_dir}/log_{{time:YYYY-MM-DD}}.log",
             level="DEBUG",
-            format="{time} | {level} | {message}",
+            format=log_format_file,
             rotation="1 day",
             retention="30 days",
             compression="zip",
@@ -82,4 +89,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-logger = get_logger(settings)
+logger = get_logger(settings.log_lvl, settings.log_dir, settings.log_to_file)
