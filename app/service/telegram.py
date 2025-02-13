@@ -112,7 +112,7 @@ class TelegramBotService:
                 message = self._format_newvideo_message(
                     video.channel_name, video.channel_url, video.video_title, video.video_url
                 )
-                logger.debug(f"(TGBot) Sending message to {self._group_id}:\n{message}")
+                logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
 
@@ -142,7 +142,7 @@ class TelegramBotService:
                 message = self._format_shorts_message(
                     video.channel_name, video.channel_url, video.video_title, video.video_url
                 )
-                logger.debug(f"(TGBot) Sending message to {self._group_id}:\n{message}")
+                logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(
                     bot, self._group_id, message, video_path=video.video_file_download_path
