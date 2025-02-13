@@ -1,11 +1,10 @@
 import os
 
-from loguru import logger
 from telegram import Message, Update
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from app.config import settings
+from app.config import logger, settings
 from app.integrations.telegram.utils import extract_original_user_id, format_telegram_message
 
 MAX_TELEGRAM_VIDEO_SIZE = 50 * 1024 * 1024  # 50 MB
@@ -56,8 +55,7 @@ def format_shorts_message(channel_name: str, channel_url: str, video_title: str,
     return (
         f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
         f'📺 На канале "[{escape_markdown(channel_name)}]({channel_url})" '
-        f"🎬🔥 *Новое видео!*\n"
-        + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
+        f"🎬🔥 *Новое видео!*\n" + escape_markdown(f'\n#Shorts #YouTube #{channel_name.replace(" ", "_")}')
     )
 
 

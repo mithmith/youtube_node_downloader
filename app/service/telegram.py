@@ -5,15 +5,12 @@ from asyncio import AbstractEventLoop
 from multiprocessing import Process, Queue
 from queue import Empty
 
-from loguru import logger
 from telegram import Bot, Update
 from telegram.error import TelegramError
 from telegram.ext import Application
 from telegram.helpers import escape_markdown
 
-from app.config import settings
-from app.db.base import Session
-from app.db.repository import YoutubeVideoRepository
+from app.config import logger, settings
 from app.integrations.telegram import get_telegram_handlers
 from app.schema import NewVideoSchema, VideoDownloadSchema
 
@@ -139,7 +136,7 @@ class TelegramBotService:
             try:
                 # Получаем сообщение из очереди
                 logger.debug("(TGBot) Checking shorts queue...")
-                video: VideoDownloadSchema = self._shorts_queue.get(block=False, timeout=5)  # Ждём сообщение
+                video: VideoDownloadSchema = self._shorts_queue.get(block=False, timeout=10)  # Ждём сообщение
                 logger.debug(f"video={video}")
 
                 message = self._format_shorts_message(

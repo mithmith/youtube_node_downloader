@@ -5,10 +5,9 @@ from pathlib import Path
 from typing import Optional
 
 import httpx
-from loguru import logger
 from pydantic import ValidationError
 
-from app.config import settings
+from app.config import logger, settings
 from app.db.base import Session
 from app.db.data_table import Video
 from app.db.repository import YoutubeDataRepository

@@ -10,10 +10,9 @@ from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError
-from loguru import logger
 from sshtunnel import SSHTunnelForwarder
 
-from app.config import settings
+from app.config import logger, settings
 from app.db.base import Session
 from app.db.data_table import Channel, Video
 from app.db.repository import YoutubeDataRepository

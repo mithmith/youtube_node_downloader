@@ -1,5 +1,8 @@
+import os
+import sys
 from functools import lru_cache
 
+from loguru import logger as log
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +41,10 @@ class Settings(BaseSettings):
     ssh_user: str = "root"
     ssh_private_key: str = "/root/.ssh/id_rsa"
 
+    log_lvl: str = "INFO"
+    log_dir: str = "logs"
+    log_to_file: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -52,8 +59,27 @@ class Settings(BaseSettings):
 
 
 @lru_cache()
+def get_logger(settings: Settings):
+    log.remove()
+    log.add(sys.stderr, level=settings.log_lvl, format="{time} | {level} | {message}", enqueue=True)
+    if settings.log_to_file:
+        os.makedirs(settings.log_dir, exist_ok=True)
+        log.add(  # Example log file name: logs/log_2024-02-13.log
+            f"{settings.log_dir}/log_{{time:YYYY-MM-DD}}.log",
+            level="DEBUG",
+            format="{time} | {level} | {message}",
+            rotation="1 day",
+            retention="30 days",
+            compression="zip",
+            enqueue=True,
+        )
+    return log
+
+
+@lru_cache()
 def get_settings() -> Settings:
     return Settings()
 
 
 settings = get_settings()
+logger = get_logger(settings)

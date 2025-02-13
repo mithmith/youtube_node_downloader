@@ -2,9 +2,7 @@ import json
 import logging
 from multiprocessing import Queue
 
-from loguru import logger
-
-from app.config import settings
+from app.config import logger, settings
 from app.service.telegram import TelegramBotService
 from app.service.yt_monitor import YTMonitorService
 

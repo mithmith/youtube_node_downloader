@@ -4,9 +4,7 @@ from pathlib import Path
 from queue import Empty
 from typing import Optional
 
-from loguru import logger
-
-from app.config import settings
+from app.config import logger, settings
 from app.db.base import Session
 from app.db.data_table import Channel, ChannelHistory, Thumbnail
 from app.db.repository import YoutubeDataRepository

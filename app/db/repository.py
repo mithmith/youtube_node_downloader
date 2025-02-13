@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Optional, Union
 from uuid import UUID, uuid4
 
-from loguru import logger
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
 
+from app.config import logger
 from app.db.base import BaseRepository
 from app.db.data_table import Channel, ChannelHistory, Tag, Thumbnail, Video, VideoHistory, VideoTag, YTFormat
 from app.schema import ChannelAPIInfoSchema, ChannelInfoSchema, ThumbnailSchema, VideoSchema, YTFormatSchema
