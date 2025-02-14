@@ -115,7 +115,7 @@ class TelegramBotService:
                 )
                 logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
-                await self._send_message_with_retries(bot, chat_id=str(settings.tg_admin_id), text=message)
+                await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
 
                 # Задержка между отправками сообщений
                 await asyncio.sleep(self._delay)
@@ -146,10 +146,7 @@ class TelegramBotService:
                 logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(
-                    bot,
-                    str(settings.tg_admin_id),
-                    message,
-                    video_path=Path(video.video_file_download_path),
+                    bot, self._group_id, message, video_path=Path(video.video_file_download_path)
                 )
 
                 # Задержка между отправками сообщений
