@@ -331,11 +331,11 @@ class YTMonitorService:
     def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
         # (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        short_download_path = Path(settings.storage_path) / settings.shorts_download_path
+        short_download_path = Path(settings.storage_path).expanduser().resolve() / settings.shorts_download_path
         return str(short_download_path / video_file_name)
 
     def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
         # (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        video_download_path = Path(settings.storage_path) / settings.video_download_path
+        video_download_path = Path(settings.storage_path).expanduser().resolve() / settings.video_download_path
         return str(video_download_path / video_file_name)

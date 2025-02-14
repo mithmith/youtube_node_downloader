@@ -3,6 +3,7 @@ import os
 import time
 from asyncio import AbstractEventLoop
 from multiprocessing import Process, Queue
+from pathlib import Path
 from queue import Empty
 
 from telegram import Bot, Update
@@ -114,7 +115,7 @@ class TelegramBotService:
                 )
                 logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
-                await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
+                await self._send_message_with_retries(bot, chat_id=str(settings.tg_admin_id), text=message)
 
                 # Задержка между отправками сообщений
                 await asyncio.sleep(self._delay)
@@ -145,7 +146,10 @@ class TelegramBotService:
                 logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(
-                    bot, self._group_id, message, video_path=video.video_file_download_path
+                    bot,
+                    str(settings.tg_admin_id),
+                    message,
+                    video_path=Path(video.video_file_download_path),
                 )
 
                 # Задержка между отправками сообщений
@@ -157,7 +161,7 @@ class TelegramBotService:
             except Exception as e:
                 logger.error(f"(TGBot) Ошибка при отправке сообщения: {e}")
 
-    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_path: str = None):
+    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_path: Path = None):
         """
         Отправляет сообщение в Telegram с заданным числом повторных попыток.
 
@@ -167,7 +171,8 @@ class TelegramBotService:
         """
         for attempt in range(1, self._max_retries + 1):
             try:
-                if video_path and os.path.isfile(video_path):
+                if video_path is not None and video_path.exists():
+                    logger.debug("(TGBot) Sending video...")
                     await bot.send_video(
                         chat_id=chat_id,
                         video=open(video_path, "rb"),

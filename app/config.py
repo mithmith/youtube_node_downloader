@@ -66,7 +66,7 @@ def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):
         "| <cyan>{file.name}:{line}</cyan> - <level>{message}</level>"
     )
     log_format_file = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level:<8} | {file.name}:{line} - {message}"
-    
+
     log.remove()
     log.add(sys.stderr, level=log_lvl, format=log_format_console, colorize=True, enqueue=True)
     if log_to_file:
