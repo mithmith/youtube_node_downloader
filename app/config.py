@@ -1,6 +1,9 @@
+import os
+import sys
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from loguru import logger as log
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -8,9 +11,9 @@ class Settings(BaseSettings):
     app_port: int = 9191
 
     storage_path: str = "/mnt/volume"
-    video_download_path: str = "/videos"
-    shorts_download_path: str = "/shorts"
-    thumbnail_download_path: str = "/videos/thumbnail"
+    video_download_path: str = "videos"
+    shorts_download_path: str = "shorts"
+    thumbnail_download_path: str = "videos/thumbnail"
 
     db_host: str = "localhost"
     db_port: int = 5432
@@ -27,6 +30,7 @@ class Settings(BaseSettings):
 
     youtube_api_key: str = "youtube_key"
     youtube_secret_json: str = ""
+    youtube_service_secret_json: str = ""
 
     tg_bot_token: str = "TELEGRAM_BOT_TOKEN"
     tg_group_id: str = "group_id"
@@ -37,9 +41,15 @@ class Settings(BaseSettings):
     ssh_user: str = "root"
     ssh_private_key: str = "/root/.ssh/id_rsa"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    log_lvl: str = "DEBUG"
+    log_dir: str = "logs"
+    log_to_file: bool = True
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     @property
     def database_url(self) -> str:
@@ -49,8 +59,34 @@ class Settings(BaseSettings):
 
 
 @lru_cache()
+def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):
+    log_format_console = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> "
+        "| <level>{level:<8}</level> "
+        "| <cyan>{file.name}:{line}</cyan> - <level>{message}</level>"
+    )
+    log_format_file = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level:<8} | {file.name}:{line} - {message}"
+    
+    log.remove()
+    log.add(sys.stderr, level=log_lvl, format=log_format_console, colorize=True, enqueue=True)
+    if log_to_file:
+        os.makedirs(log_dir, exist_ok=True)
+        log.add(  # Example log file name: logs/log_2024-02-13.log
+            f"{log_dir}/log_{{time:YYYY-MM-DD}}.log",
+            level="DEBUG",
+            format=log_format_file,
+            rotation="1 day",
+            retention="30 days",
+            compression="zip",
+            enqueue=True,
+        )
+    return log
+
+
+@lru_cache()
 def get_settings() -> Settings:
     return Settings()
 
 
 settings = get_settings()
+logger = get_logger(settings.log_lvl, settings.log_dir, settings.log_to_file)

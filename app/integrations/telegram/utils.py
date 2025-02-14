@@ -1,6 +1,6 @@
 from typing import Optional
 
-from loguru import logger
+from app.config import logger
 
 
 def format_telegram_message(channel_name, channel_url, video_title, video_url):

@@ -1,12 +1,11 @@
 from typing import Generic, Type, TypeVar
 from uuid import UUID
 
-from loguru import logger
 from sqlalchemy import MetaData, create_engine, orm
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel, select
 
-from app.config import settings
+from app.config import logger, settings
 
 engine = create_engine(settings.database_url, echo=False, pool_size=10, max_overflow=20)
 Session = orm.sessionmaker(engine, expire_on_commit=False)
