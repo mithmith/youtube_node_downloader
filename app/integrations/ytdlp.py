@@ -52,6 +52,7 @@ class YTChannelDownloader:
         return new_videos, old_videos
 
     def _get_channel_data(self) -> dict:
+        logger.debug(f"yt-dlp -J --quiet {self._channel_url}")
         result = subprocess.run(
             ["yt-dlp", "-J", "--flat-playlist", "--quiet", "--no-warnings", "--no-progress", self._channel_url],
             capture_output=True,

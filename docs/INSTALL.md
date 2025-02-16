@@ -273,11 +273,13 @@ docker run --name postgres-db \
 Запустите проектный контейнер с привязкой `.env` и `channels_list.json`:
 
 ```bash
-docker run --name youtube-monitoring \
+docker run --name youtube-workerchronicles \
     --env-file .env \
-    -v $(pwd)/channels_list.json:/app/channels_list.json \
+    -v $(pwd)/channels_list.json:/channels_list.json \
+    -v $(pwd)/logs/:/app/logs/ \
+    -v yt-dlp:yt-dlp \
     -p 9191:9191 \
-    youtube-monitoring-app
+    youtube-workerchronicles-app
 ```
 
 - **`--env-file .env`** — указывает файл с переменными окружения.
