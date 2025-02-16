@@ -232,10 +232,10 @@ docker run --name postgres-db \
     -e POSTGRES_PASSWORD=postgres \
     -e POSTGRES_DB=peer_tube \
     -p 5432:5432 \
-    -d postgres:14
+    -d postgres:16
 ```
 
-Эта команда создаёт и запускает контейнер с базой данных PostgreSQL14.
+Эта команда создаёт и запускает контейнер с базой данных PostgreSQL16.
 
 ---
 

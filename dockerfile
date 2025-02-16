@@ -6,24 +6,19 @@ FROM base AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install -y python3-pip && \
-    apt-get install -y wget curl build-essential cmake make && \
-    apt-get install -y gcc-aarch64-linux-gnu python3-dev && \
-    apt-get clean autoclean
+    apt-get install -y python3-pip wget curl build-essential cmake make \
+                       gcc-aarch64-linux-gnu python3-dev && \
+    apt-get clean autoclean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Копируем зависимости Poetry
-COPY poetry.lock* pyproject.toml ./ 
+# Копируем файлы для установки зависимостей
+COPY poetry.lock pyproject.toml ./
 
 # Устанавливаем Poetry и зависимости
-RUN mkdir -p ~/.config/pip && \
-    python3 -m pip install --disable-pip-version-check -U pip wheel poetry && \
+RUN python3 -m pip install --disable-pip-version-check -U pip wheel poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-root --no-interaction --no-ansi
-
-# Копируем исходный код проекта
-COPY . .
 
 # Создание финального образа
 FROM base
@@ -33,10 +28,9 @@ WORKDIR /app
 # Копируем проект из этапа сборки
 COPY --from=builder /app ./
 
-# Настройка переменных среды
-ENV VIRTUAL_ENV=/app/.venv
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH=/app
+# Копируем установленные зависимости из builder
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Указываем команду для запуска
 CMD ["python3", "-m", "app"]
