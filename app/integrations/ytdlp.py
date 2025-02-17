@@ -40,7 +40,7 @@ class YTChannelDownloader:
                 logger.debug("Getting video list from channel data...")
                 video_list, channel_id = self._extract_video_list()
             except Exception as e:
-                logger.error("Ошибка при обработке списка видео:", exc_info=e)
+                logger.error(f"Ошибка при обработке списка видео: {e}")
         return video_list, channel_id
 
     def filter_new_old(
@@ -54,14 +54,14 @@ class YTChannelDownloader:
 
     def _get_channel_data(self) -> dict:
         command = ["yt-dlp", "-J", "--flat-playlist", "--quiet", "--no-warnings", "--no-progress", self._channel_url]
-        logger.debug(f"Запускаем команду: {' '.join(command)}")
+        logger.debug(f"Executing command: {' '.join(command)}")
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
         )
         if result.returncode != 0:
-            logger.error(f"Ошибка при выполнении yt-dlp для {self._channel_url}: {result.stderr}")
+            logger.error(f"Error while executing yt-dlp for {self._channel_url}: {result.stderr}")
             return {}
 
         try:

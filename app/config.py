@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     tg_group_id: str = "group_id"
     tg_admin_id: int = 0
 
+    use_proxy: bool = False
     ssh_host: str = "localhost"
     ssh_port: int = 22
     ssh_user: str = "root"
