@@ -18,6 +18,7 @@ channels_list.json
 
 # Игнорирование файлов с секретами и ключи
 .env
+*.env
 *oauth2*.json
 *secret*.json
 *.pickle
