@@ -29,6 +29,7 @@ fi
 # Определяем действие (start, stop, logs, restart)
 ACTION=$1
 JSON_FILE=$2
+MODE=$3  # -i (интерактивный) или -d (фоновый)
 
 # Определяем имя контейнера на основе имени JSON-файла
 if [[ "$ACTION" == "start" ]]; then
@@ -52,15 +53,27 @@ case $ACTION in
             sleep 2
         fi
 
-        # Запускаем контейнер
-        echo "🚀 Запускаем контейнер $CONTAINER_NAME с файлом $JSON_FILE"
-        docker run --rm --name "$CONTAINER_NAME" \
-            --network proxy_net \
-            --env-file .env \
-            -v "$(pwd)/$JSON_FILE:/app/channels_list.json" \
-            -v "$(pwd)/logs/:/app/logs/" \
-            -v "${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
-            youtube-monitoring-app
+
+        # Выбор режима запуска
+        if [[ "$MODE" == "-d" ]]; then
+            echo "🚀 Запускаем контейнер $CONTAINER_NAME в фоновом режиме (detached)"
+            docker run -d --name "$CONTAINER_NAME" \
+                --network proxy_net \
+                --env-file .env \
+                -v "$(pwd)/$JSON_FILE:/app/channels_list.json" \
+                -v "$(pwd)/logs/:/app/logs/" \
+                -v "${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
+                youtube-monitoring-app
+        else
+            echo "🚀 Запускаем контейнер $CONTAINER_NAME в интерактивном режиме"
+            docker run --rm --name "$CONTAINER_NAME" \
+                --network proxy_net \
+                --env-file .env \
+                -v "$(pwd)/$JSON_FILE:/app/channels_list.json" \
+                -v "$(pwd)/logs/:/app/logs/" \
+                -v "${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
+                youtube-monitoring-app
+        fi
         ;;
     
     stop)
@@ -81,12 +94,13 @@ case $ACTION in
         ;;
     
     *)
-        echo "Usage: $0 {start|stop|logs|restart} [json_file]"
+        echo "Usage: $0 {start|stop|logs|restart} [json_file] [-d]"
         echo "Примеры:"
-        echo "  $0 start my_channels_list.json"
-        echo "  $0 stop my_channels_list"
-        echo "  $0 logs my_channels_list"
-        echo "  $0 restart my_channels_list"
+        echo "  $0 start my_channels_list.json          # Запуск в интерактивном режиме"
+        echo "  $0 start my_channels_list.json -d      # Запуск в фоновом режиме"
+        echo "  $0 stop my_channels_list               # Остановка контейнера"
+        echo "  $0 logs my_channels_list               # Просмотр логов"
+        echo "  $0 restart my_channels_list            # Перезапуск контейнера"
         exit 1
         ;;
 esac
