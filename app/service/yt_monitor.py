@@ -18,7 +18,7 @@ class YTMonitorService:
         self,
         channels_list: list[str],
         new_videos_timeout: int = 600,
-        history_timeout: int = 4 * 60 * 60,
+        history_timeout: int = 8 * 60 * 60,
         new_videos_queue: Optional[Queue] = None,
         shorts_videos_queue: Optional[Queue] = None,
     ) -> None:

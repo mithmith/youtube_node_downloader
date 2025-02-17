@@ -33,7 +33,7 @@ echo "🚀 Запускаем контейнер youtube-monitoring"
 docker run --rm --name youtube-monitoring \
     --network proxy_net \
     --env-file .env \
-    -v $(pwd)/channels_list.json:/app/app/channels_list.json \
-    -v $(pwd)/logs/:/app/app/logs/ \
+    -v $(pwd)/channels_list.json:/app/channels_list.json \
+    -v $(pwd)/logs/:/app/logs/ \
     -v ${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH} \
     youtube-monitoring-app

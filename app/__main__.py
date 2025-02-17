@@ -23,7 +23,7 @@ def load_channels_list(file_path: str = "channels_list.json") -> list[str]:
     """
     patterns = {
         "channel": re.compile(r"^https://www\.youtube\.com/channel/([a-zA-Z0-9_-]+)(/videos)?$"),
-        "handle": re.compile(r"^https://www\.youtube\.com/@([a-zA-Z0-9_-]+)(/videos)?$"),
+        "handle": re.compile(r"^https://www\.youtube\.com/@([a-zA-Z0-9_.-]+)(/videos)?$"),
         "custom": re.compile(r"^https://www\.youtube\.com/c/([a-zA-Z0-9_-]+)(/videos)?$"),
     }
 

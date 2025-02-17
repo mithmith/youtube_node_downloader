@@ -57,8 +57,8 @@ case $ACTION in
         docker run --rm --name "$CONTAINER_NAME" \
             --network proxy_net \
             --env-file .env \
-            -v "$(pwd)/$JSON_FILE:/app/app/channels_list.json" \
-            -v "$(pwd)/logs/:/app/app/logs/" \
+            -v "$(pwd)/$JSON_FILE:/app/channels_list.json" \
+            -v "$(pwd)/logs/:/app/logs/" \
             -v "${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
             youtube-monitoring-app
         ;;
