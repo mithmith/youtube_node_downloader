@@ -17,7 +17,7 @@ class YTMonitorService:
     def __init__(
         self,
         channels_list: list[str],
-        new_videos_timeout: int = 600,
+        new_videos_timeout: int = 15 * 60,
         history_timeout: int = 8 * 60 * 60,
         new_videos_queue: Optional[Queue] = None,
         shorts_videos_queue: Optional[Queue] = None,
