@@ -263,28 +263,29 @@ docker run --name postgres-db \
 
 2. (Опционально) Или скачать образ с Docker Hub:
    ```bash
-   docker pull docker.io/mithmith/youtube-monitoring-app
+   docker pull docker.io/mithmith/youtube-monitoring-app:latest
    ```
 
 ---
 
 ### Шаг 4: Запуск проекта
 
+Сделайте `run_youtube_worker.sh` запускаемым:
+
+```bash
+   chmod +x ./run_youtube_worker.sh
+```
+
+Настройте все необходимые переменные в `.env`.
 Запустите проектный контейнер с привязкой `.env` и `channels_list.json`:
 
 ```bash
-docker run --name youtube-workerchronicles \
-    --env-file .env \
-    -v $(pwd)/channels_list.json:/channels_list.json \
-    -v $(pwd)/logs/:/app/logs/ \
-    -v yt-dlp:yt-dlp \
-    -p 9191:9191 \
-    youtube-workerchronicles-app
+   ./run_youtube_worker.sh start channels_list.json
 ```
 
+Внутри скрипта находится команда запуска контейнера с указанным списком каналов.
 - **`--env-file .env`** — указывает файл с переменными окружения.
 - **`-v $(pwd)/channels_list.json:/app/channels_list.json`** — монтирует файл со списком каналов.
-- **`-p 9191:9191`** — пробрасывает порт для доступа к приложению.
 
 ---
 
