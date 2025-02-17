@@ -33,7 +33,7 @@ WORKDIR /app
 
 # Устанавливаем proxychains4 в финальном образе
 RUN apt-get update && \
-    apt-get install -y proxychains4 && \
+    apt-get install -y proxychains && \
     apt-get clean autoclean && rm -rf /var/lib/apt/lists/*
 
 # Копируем проект и установленные зависимости из builder
@@ -42,9 +42,9 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Копируем локальный конфиг proxychains внутрь контейнера
-COPY proxychains.conf /etc/proxychains4.conf
+COPY proxychains.conf /etc/proxychains.conf
 
 RUN mkdir -p /app/logs && chmod 777 /app/logs
 ENV PYTHONPATH=/app
 # Указываем команду для запуска
-CMD ["/bin/sh", "-c", "${USE_PROXY:+proxychains4} python3 -m app"]
+CMD ["/bin/sh", "-c", "${USE_PROXY:+proxychains} python3 -m app"]
