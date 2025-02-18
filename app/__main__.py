@@ -3,7 +3,7 @@ from multiprocessing import Queue
 
 from app.config import settings
 from app.service.telegram import TelegramBotService
-from app.service.utils import load_channels_list
+from app.service.utils import load_channels_data
 from app.service.yt_monitor import YTMonitorService
 
 # Настройка уровня логирования SQLAlchemy
@@ -24,11 +24,11 @@ if __name__ == "__main__":
     else:
         shorts_queue = None
     # Загружаем список каналов
-    channels_list = load_channels_list()
+    channels_list, channels_name = load_channels_data()
 
     # Инициализируем мониторинг YouTube
     monitor = YTMonitorService(
-        channels_list=channels_list, new_videos_queue=news_queue, shorts_videos_queue=shorts_queue
+        channels_list, channels_name, new_videos_queue=news_queue, shorts_videos_queue=shorts_queue
     )
 
     # Запускаем процессы

@@ -9,7 +9,7 @@ def clean_string(s: str) -> str:
     return re.sub(rf"[^{allowed_chars}]", "", s)
 
 
-def load_channels_list(file_path: str = "channels_list.json") -> list[str]:
+def load_channels_data(file_path: str = "channels_list.json") -> tuple[list[str], str | None]:
     """
     Загружает список YouTube-каналов из txt или JSON файла, проверяет валидность, корректирует и удаляет дубликаты.
     """
@@ -20,12 +20,14 @@ def load_channels_list(file_path: str = "channels_list.json") -> list[str]:
     }
 
     valid_urls = set()
+    channels_name = None
 
     try:
         if file_path.endswith(".json"):
             with open(file_path, encoding="utf8") as f:
                 data = json.load(f)
                 channels = set(data.get("channels", []))
+                channels_name = data.get("name")
         elif file_path.endswith(".txt"):
             with open(file_path, "r", encoding="utf-8") as file:
                 channels = {line.strip() for line in file if line.strip()}
@@ -53,4 +55,4 @@ def load_channels_list(file_path: str = "channels_list.json") -> list[str]:
     except Exception as e:
         logger.error(f"Неизвестная ошибка: {e}")
     logger.debug(f"Всего загружено {len(valid_urls)} каналов")
-    return sorted(valid_urls)
+    return sorted(valid_urls), channels_name
