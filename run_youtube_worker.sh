@@ -62,7 +62,7 @@ case $ACTION in
                 --env-file .env \
                 -v "$(pwd)/$JSON_FILE:/app/channels_list.json" \
                 -v "$(pwd)/logs/:/app/logs/" \
-                -v "${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
+                -v "$(pwd)/${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
                 youtube-monitoring-app
         else
             echo "🚀 Запускаем контейнер $CONTAINER_NAME в интерактивном режиме"
@@ -71,7 +71,7 @@ case $ACTION in
                 --env-file .env \
                 -v "$(pwd)/$JSON_FILE:/app/channels_list.json" \
                 -v "$(pwd)/logs/:/app/logs/" \
-                -v "${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
+                -v "$(pwd)/${STORAGE_ABS_PATH}:${STORAGE_ABS_PATH}" \
                 youtube-monitoring-app
         fi
         ;;
