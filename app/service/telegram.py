@@ -10,6 +10,7 @@ from telegram import Bot, Update
 from telegram.error import TelegramError
 from telegram.ext import Application
 from telegram.helpers import escape_markdown
+from jinja2 import Template, TemplateSyntaxError
 
 from app.config import logger, settings
 from app.integrations.telegram import get_telegram_handlers
@@ -206,19 +207,45 @@ class TelegramBotService:
 
         logger.error("Не удалось отправить сообщение после всех попыток")
 
+    @staticmethod
+    def render_template(template_path: Path, **kwargs) -> str:
+        """Загружает и рендерит шаблон с подстановкой значений."""
+        if not template_path.exists():
+            raise FileNotFoundError(f"Шаблон не найден: {template_path}")
+
+        try:
+            with open(template_path, "r", encoding="utf-8") as f:
+                template_content = f.read()
+
+            # Экранируем переменные
+            safe_kwargs = {
+                key: escape_markdown(value, version=2) if key not in {"channel_hashtag"} else value
+                for key, value in kwargs.items()
+            }
+
+            template = Template(template_content)
+            return template.render(**safe_kwargs)
+        except TemplateSyntaxError as e:
+            raise ValueError(f"Ошибка в шаблоне {template_path}: {e}")
+
     def _format_newvideo_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
-        return (
-            f"🎥 **[{escape_markdown(video_title)}]({video_url})**\n"
-            + escape_markdown(f"#{get_channel_hashtag(channel_name)} #Videos\n")
-            + f"На канале «[{escape_markdown(channel_name)}]({channel_url})» вышло новое видео:"
+        return self.render_template(
+            settings.tg_new_video_template,
+            video_title=video_title,
+            video_url=video_url,
+            channel_name=channel_name,
+            channel_url=channel_url,
+            channel_hashtag=get_channel_hashtag(channel_name),
         )
 
     def _format_shorts_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
-        return (
-            f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
-            f"🎬 Новое видео!"
-            f" На канале «[{escape_markdown(channel_name)}]({channel_url})»\n"
-            + escape_markdown(f"#Shorts #YouTube #{get_channel_hashtag(channel_name)}")
+        return self.render_template(
+            settings.tg_shorts_template,
+            video_title=video_title,
+            video_url=video_url,
+            channel_name=channel_name,
+            channel_url=channel_url,
+            channel_hashtag=get_channel_hashtag(channel_name),
         )

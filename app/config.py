@@ -1,6 +1,7 @@
 import os
 import sys
 from functools import lru_cache
+from pathlib import Path
 
 from loguru import logger as log
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -36,6 +37,8 @@ class Settings(BaseSettings):
     tg_bot_token: str = "TELEGRAM_BOT_TOKEN"
     tg_group_id: str = "group_id"
     tg_admin_id: int = 0
+    tg_new_video_template: Path = "./templates/new_video.md"
+    tg_shorts_template: Path = "./templates/shorts.md"
 
     use_proxy: bool = False
     ssh_host: str = "localhost"
@@ -59,6 +62,10 @@ class Settings(BaseSettings):
             f"postgresql+psycopg2://{self.db_username}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tg_new_video_template = Path(self.tg_new_video_template).resolve()
+        self.tg_shorts_template = Path(self.tg_shorts_template).resolve()
 
 @lru_cache()
 def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):
