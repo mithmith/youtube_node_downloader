@@ -5,8 +5,14 @@ from app.config import logger
 
 
 def clean_string(s: str) -> str:
-    allowed_chars = r"A-Za-zА-Яа-яЁё0-9_\-"
+    allowed_chars = r"A-Za-zА-Яа-яЁё0-9_"
     return re.sub(rf"[^{allowed_chars}]", "", s)
+
+
+def get_channel_hashtag(channel_name: str) -> str:
+    hashtag_string = channel_name.strip().replace(" ", "_").replace("-", "_")
+    hashtag_string = clean_string(hashtag_string.replace("__", "_")).replace("__", "_")
+    return hashtag_string.replace("__", "_")
 
 
 def load_channels_data(file_path: str = "channels_list.json") -> tuple[list[str], str | None]:
@@ -54,5 +60,13 @@ def load_channels_data(file_path: str = "channels_list.json") -> tuple[list[str]
         logger.error(f"Ошибка декодирования JSON: {e}")
     except Exception as e:
         logger.error(f"Неизвестная ошибка: {e}")
-    logger.debug(f"Всего загружено {len(valid_urls)} каналов")
+    logger.debug(f"Из файла '{file_path}' загружено {len(valid_urls)} каналов")
     return sorted(valid_urls), channels_name
+
+
+if __name__ == "__main__":
+    from telegram.helpers import escape_markdown
+
+    channel_name = "«Профсоюз МПРА в Санкт-Петербурге и Ленобласти»"
+    test_hashtag = escape_markdown(f"#{get_channel_hashtag(channel_name)}")
+    print(test_hashtag)

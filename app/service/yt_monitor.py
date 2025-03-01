@@ -258,7 +258,7 @@ class YTMonitorService:
         """
         with Session() as session:
             repository = YoutubeDataRepository(session)
-            channel = repository.upsert_channel(channel_info)
+            channel = repository.upsert_channel(channel_info, self._channels_name)
             if add_history:
                 repository.add_channel_history(channel)
 

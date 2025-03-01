@@ -14,7 +14,7 @@ from telegram.helpers import escape_markdown
 from app.config import logger, settings
 from app.integrations.telegram import get_telegram_handlers
 from app.schema import NewVideoSchema, VideoDownloadSchema
-from app.service.utils import clean_string
+from app.service.utils import get_channel_hashtag
 
 
 class TelegramBotService:
@@ -210,7 +210,7 @@ class TelegramBotService:
         """Форматирование сообщения в Markdown формате."""
         return (
             f"🎥 **[{escape_markdown(video_title)}]({video_url})**\n"
-            + escape_markdown(f"#{clean_string(channel_name.replace(' ', '_'))} #Videos\n")
+            + escape_markdown(f"#{get_channel_hashtag(channel_name)} #Videos\n")
             + f"На канале «[{escape_markdown(channel_name)}]({channel_url})» вышло новое видео:"
         )
 
@@ -220,5 +220,5 @@ class TelegramBotService:
             f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
             f"🎬 Новое видео!"
             f" На канале «[{escape_markdown(channel_name)}]({channel_url})»\n"
-            + escape_markdown(f"#Shorts #YouTube #{clean_string(channel_name.replace(' ', '_'))}")
+            + escape_markdown(f"#Shorts #YouTube #{get_channel_hashtag(channel_name)}")
         )

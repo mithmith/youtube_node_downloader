@@ -458,7 +458,9 @@ class YoutubeDataRepository(BaseRepository[Channel]):
         new_v_ids = [v_id for v_id in video_ids if v_id not in existing_v_ids]
         return new_v_ids, existing_v_ids
 
-    def upsert_channel(self, channel_data: Union[ChannelInfoSchema, ChannelAPIInfoSchema]) -> Channel:
+    def upsert_channel(
+        self, channel_data: Union[ChannelInfoSchema, ChannelAPIInfoSchema], channels_list_name: str
+    ) -> Channel:
         """
         Updates the details of an existing channel or creates a new channel if it does not exist.
 
@@ -490,11 +492,13 @@ class YoutubeDataRepository(BaseRepository[Channel]):
                     if hasattr(channel, key):
                         setattr(channel, key, value)
                 channel.last_update = datetime.now().replace(microsecond=0)
+                channel.list_name = channels_list_name
             else:
                 # Create a new channel
                 new_channel_data = {key: value for key, value in channel_dict.items() if hasattr(Channel, key)}
                 new_channel_data["last_update"] = datetime.now().replace(microsecond=0)
                 channel = Channel(**new_channel_data)
+                channel.list_name = channels_list_name
                 self._session.add(channel)
 
             # Commit the transaction

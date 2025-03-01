@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     app_host: str = "localhost"
     app_port: int = 9191
 
+    channels_list_path: str = "channels_list.json"
     storage_path: str = "/mnt/volume"
     video_download_path: str = "videos"
     shorts_download_path: str = "shorts"

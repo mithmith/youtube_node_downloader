@@ -24,7 +24,7 @@ if __name__ == "__main__":
     else:
         shorts_queue = None
     # Загружаем список каналов
-    channels_list, channels_name = load_channels_data()
+    channels_list, channels_name = load_channels_data(settings.channels_list_path)
 
     # Инициализируем мониторинг YouTube
     monitor = YTMonitorService(

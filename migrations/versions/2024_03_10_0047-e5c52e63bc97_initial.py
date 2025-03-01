@@ -43,6 +43,7 @@ def upgrade() -> None:
         sa.Column("banner_path", sa.String(), nullable=True),
         sa.Column("avatar_path", sa.String(), nullable=True),
         sa.Column("last_update", sa.DateTime(), nullable=True, server_default=sa.text("now()")),
+        sa.Column("list_name", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("channel_id"),
         sa.UniqueConstraint("channel_url", name="channels_channel_url_key"),
         sa.UniqueConstraint("id", name="channels_id_key"),
