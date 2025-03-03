@@ -134,7 +134,7 @@ class YTMonitorService:
             logger.error(f"Failed to retrieve channel info for {channel_url}. Skipping...")
             return
 
-        api_client = YTApiClient(over_ssh_tunnel=False)
+        api_client = YTApiClient(over_ssh_tunnel=settings.use_ssh_tunnel)
         # Если канала нет в БД, до дополняем о нём информацию через API и добавляем в БД
         if not yt_dlp_client.channel_exist(ytdlp_channel_info.channel_id):
             logger.debug("Channel not found in database! Updating...")

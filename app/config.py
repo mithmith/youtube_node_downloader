@@ -15,14 +15,14 @@ class Settings(BaseSettings):
     storage_path: str = "/mnt/volume"
     video_download_path: str = "videos"
     shorts_download_path: str = "shorts"
-    thumbnail_download_path: str = "videos/thumbnail"
+    thumbnail_download_path: str = "thumbnails"
 
     db_host: str = "localhost"
     db_port: int = 5432
-    db_name: str = "peer_tube_db"
+    db_name: str = "youtube_db"
     db_schema: str = "youtube"
-    db_username: str = "peer_tube_user"
-    db_password: str = "peer_tube_password"
+    db_username: str = "you_tube_db_user"
+    db_password: str = "you_tube_db_password"
 
     monitor_new: bool = True
     monitor_history: bool = False
@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     tg_shorts_template: Path = "./templates/shorts.md"
 
     use_proxy: bool = False
+    use_ssh_tunnel: bool = False
     ssh_host: str = "localhost"
     ssh_port: int = 22
     ssh_user: str = "root"
@@ -66,6 +67,7 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
         self.tg_new_video_template = Path(self.tg_new_video_template).resolve()
         self.tg_shorts_template = Path(self.tg_shorts_template).resolve()
+
 
 @lru_cache()
 def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):

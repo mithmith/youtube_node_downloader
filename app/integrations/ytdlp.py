@@ -3,6 +3,7 @@ import json
 import subprocess
 from pathlib import Path
 from typing import Optional
+import locale
 
 import httpx
 from pydantic import ValidationError
@@ -102,7 +103,8 @@ class YTChannelDownloader:
         if process.returncode == 0:
             logger.info(f"Видео скачано: {video_info.video_file_download_path}")
         else:
-            logger.error(f"Ошибка скачивания видео: {stderr.decode().strip()}")
+            stderr_text = stderr.decode(locale.getpreferredencoding(False), errors="replace").strip()
+            logger.error(f"Ошибка скачивания видео: {stderr_text}")
 
     def download_thumbnail(self, video_id: str) -> None:
         video: Video = self._repository.get_video(video_id)

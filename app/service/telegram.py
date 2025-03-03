@@ -6,11 +6,11 @@ from multiprocessing import Process, Queue
 from pathlib import Path
 from queue import Empty
 
+from jinja2 import Template, TemplateSyntaxError
 from telegram import Bot, Update
 from telegram.error import TelegramError
 from telegram.ext import Application
 from telegram.helpers import escape_markdown
-from jinja2 import Template, TemplateSyntaxError
 
 from app.config import logger, settings
 from app.integrations.telegram import get_telegram_handlers
@@ -176,7 +176,7 @@ class TelegramBotService:
                         chat_id=chat_id,
                         video=open(video_path, "rb"),
                         caption=text,
-                        parse_mode="Markdown",
+                        parse_mode="MarkdownV2",
                         pool_timeout=180,
                         read_timeout=180,
                         write_timeout=180,
@@ -187,7 +187,7 @@ class TelegramBotService:
                     await bot.send_message(
                         chat_id=chat_id,
                         text=text,
-                        parse_mode="Markdown",
+                        parse_mode="MarkdownV2",
                     )
                     # self._repository.update_tg_post_date(video_id)
                     logger.info("(TGBot) Сообщение успешно отправлено")
@@ -219,7 +219,9 @@ class TelegramBotService:
 
             # Экранируем переменные
             safe_kwargs = {
-                key: escape_markdown(value, version=2) if key not in {"channel_hashtag"} else value
+                key: escape_markdown(value, version=2)
+                if key not in {"video_url", "channel_url"}
+                else value
                 for key, value in kwargs.items()
             }
 
