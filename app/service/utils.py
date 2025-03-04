@@ -15,6 +15,16 @@ def get_channel_hashtag(channel_name: str) -> str:
     return hashtag_string.replace("__", "_")
 
 
+def extract_hashtags(video_title: str) -> tuple[str, str]:
+    # Регулярка для поиска хэштегов
+    pattern = r"(#[^\s#]+)"
+    found_hashtags = re.findall(pattern, video_title)
+    cleaned_title = re.sub(pattern, "", video_title)
+    cleaned_title = re.sub(r"\s+", " ", cleaned_title).strip()
+    extracted_hashtags = " ".join(set(found_hashtags))
+    return cleaned_title, extracted_hashtags
+
+
 def load_channels_data(file_path: str = "channels_list.json") -> tuple[list[str], str | None]:
     """
     Загружает список YouTube-каналов из txt или JSON файла, проверяет валидность, корректирует и удаляет дубликаты.

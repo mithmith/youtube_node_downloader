@@ -1,9 +1,9 @@
 import asyncio
 import json
+import locale
 import subprocess
 from pathlib import Path
 from typing import Optional
-import locale
 
 import httpx
 from pydantic import ValidationError
