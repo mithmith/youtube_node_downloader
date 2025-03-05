@@ -195,6 +195,7 @@ class TelegramBotService:
                             prefer_large_media=True,
                         ),
                     )
+                    logger.info("(TGBot) Сообщение с превью успешно отправлено")
                 elif text:
                     await bot.send_message(
                         chat_id=chat_id,
