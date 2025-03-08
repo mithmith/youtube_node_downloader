@@ -74,11 +74,11 @@ def upgrade() -> None:
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("duration", sa.Integer(), nullable=False),
-        sa.Column("view_count", sa.Integer(), nullable=True),
+        sa.Column("view_count", sa.BigInteger(), nullable=True),
         sa.Column("upload_date", sa.DateTime(), nullable=True),
-        sa.Column("like_count", sa.Integer(), nullable=True, server_default="0"),
+        sa.Column("like_count", sa.BigInteger(), nullable=True, server_default="0"),
         sa.Column("defaultaudiolanguage", sa.String(), nullable=True),
-        sa.Column("comment_count", sa.Integer(), nullable=True, server_default="0"),
+        sa.Column("comment_count", sa.BigInteger(), nullable=True, server_default="0"),
         sa.Column("last_update", sa.DateTime(), nullable=True, server_default=sa.text("now()")),
         sa.ForeignKeyConstraint(
             ["channel_id"], [f"{settings.db_schema}.channels.channel_id"], name="videos_channel_id_fkey"
@@ -91,11 +91,11 @@ def upgrade() -> None:
     op.create_index("videos_channel_id_idx", "videos", ["channel_id"], schema=settings.db_schema)
     op.create_table(
         "video_history",
-        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("id", sa.BigInteger(), nullable=False),
         sa.Column("video_id", sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("view_count", sa.Integer(), nullable=True),
-        sa.Column("like_count", sa.Integer(), nullable=True),
-        sa.Column("comment_count", sa.Integer(), nullable=True),
+        sa.Column("view_count", sa.BigInteger(), nullable=True),
+        sa.Column("like_count", sa.BigInteger(), nullable=True),
+        sa.Column("comment_count", sa.BigInteger(), nullable=True),
         sa.Column("recorded_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
         sa.ForeignKeyConstraint(["video_id"], [f"{settings.db_schema}.videos.id"], name="video_history_video_id_fkey"),
         sa.PrimaryKeyConstraint("id", name="video_history_pkey"),
