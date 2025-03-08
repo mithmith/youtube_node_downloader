@@ -33,6 +33,8 @@ class YTMonitorService:
         self._shorts_publish_queue = shorts_videos_queue
         self._download_queue = Queue()
         self._shorts_publish = settings.run_tg_bot_shorts_publish
+        self._short_download_path = Path(settings.storage_path).expanduser().resolve() / settings.shorts_download_path
+        self._video_download_path = Path(settings.storage_path).expanduser().resolve() / settings.video_download_path
 
     def run(
         self, monitor_new: bool = True, monitor_history: bool = True, monitor_video_formats: bool = True
@@ -226,7 +228,7 @@ class YTMonitorService:
                                 video_title=video.title,
                                 video_url=video.url,
                                 video_id=video.id,
-                                video_file_download_path=new_shorts_path,
+                                video_file_download_path=str(new_shorts_path),
                             )
                         )
         if process_old and old_videos:
@@ -330,12 +332,10 @@ class YTMonitorService:
                 repository.update_video(video_schema)
                 repository.add_video_history(video_schema)
 
-    def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
+    def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> Path:
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        short_download_path = Path(settings.storage_path).expanduser().resolve() / settings.shorts_download_path
-        return str(short_download_path / video_file_name)
+        return (self._short_download_path / video_file_name)
 
-    def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
+    def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> Path:
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        video_download_path = Path(settings.storage_path).expanduser().resolve() / settings.video_download_path
-        return str(video_download_path / video_file_name)
+        return (self._video_download_path / video_file_name)

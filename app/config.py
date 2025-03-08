@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     tg_admin_id: int = 0
     tg_new_video_template: Path = "./templates/new_video.md"
     tg_shorts_template: Path = "./templates/shorts.md"
+    tg_new_video_template_default: Path = "./templates/new_video.md"
+    tg_shorts_template_default: Path = "./templates/shorts.md"
 
     use_proxy: bool = False
     use_ssh_tunnel: bool = False
@@ -67,6 +69,8 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
         self.tg_new_video_template = Path(self.tg_new_video_template).resolve()
         self.tg_shorts_template = Path(self.tg_shorts_template).resolve()
+        self.tg_new_video_template_default = Path(self.tg_new_video_template_default).resolve()
+        self.tg_shorts_template_default = Path(self.tg_shorts_template_default).resolve()
 
 
 @lru_cache()

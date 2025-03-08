@@ -249,8 +249,13 @@ class TelegramBotService:
             all_hashtags = f"#Videos #{main_hashtag} {additional_hashtags}"
         else:
             all_hashtags = f"#Videos #{main_hashtag} #YouTube"
+        if settings.tg_new_video_template.exists():
+            new_video_template_path = settings.tg_new_video_template
+        else:
+            logger.warning("New video template not found. Using default template!")
+            new_video_template_path = settings.tg_new_video_template_default
         return self.render_template(
-            settings.tg_new_video_template,
+            new_video_template_path,
             video_title=cleaned_title,
             video_url=video_url,
             channel_name=channel_name,
@@ -266,8 +271,13 @@ class TelegramBotService:
             all_hashtags = f"#Shorts #{main_hashtag} {additional_hashtags}"
         else:
             all_hashtags = f"#Shorts #{main_hashtag}"
+        if settings.tg_shorts_template.exists():
+            shorts_template_path = settings.tg_shorts_template
+        else:
+            logger.warning("Shorts template not found. Using default template!")
+            shorts_template_path = settings.tg_shorts_template_default
         return self.render_template(
-            settings.tg_shorts_template,
+            shorts_template_path,
             video_title=cleaned_title,
             video_url=video_url,
             channel_name=channel_name,
