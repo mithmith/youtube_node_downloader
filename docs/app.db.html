@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.db package &mdash; Youtube node downloader 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="app.integrations package" href="app.integrations.html" />
+    <link rel="prev" title="app package" href="app.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Youtube node downloader
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="app.html">app package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="app.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">app.db package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-app.db.base">app.db.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-app.db.repository">app.db.repository module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-app.db">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="app.integrations.html">app.integrations package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="app.service.html">app.service package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="app.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.html#module-app.config">app.config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.html#module-app.const">app.const module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.html#module-app.schema">app.schema module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.html#module-app">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Youtube node downloader</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="app.html">app package</a></li>
+      <li class="breadcrumb-item active">app.db package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/app.db.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="app-db-package">
+<h1>app.db package<a class="headerlink" href="#app-db-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-app.db.base">
+<span id="app-db-base-module"></span><h2>app.db.base module<a class="headerlink" href="#module-app.db.base" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.db.base.Base">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.db.base.</span></span><span class="sig-name descname"><span class="pre">Base</span></span><a class="reference internal" href="_modules/app/db/base.html#Base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.Base" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLModel</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.db.base.Base.Config">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Config</span></span><a class="reference internal" href="_modules/app/db/base.html#Base.Config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.Base.Config" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.base.Base.Config.arbitrary_types_allowed">
+<span class="sig-name descname"><span class="pre">arbitrary_types_allowed</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#app.db.base.Base.Config.arbitrary_types_allowed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.base.Base.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">MetaData</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">MetaData()</span></em><a class="headerlink" href="#app.db.base.Base.metadata" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.base.Base.model_computed_fields">
+<span class="sig-name descname"><span class="pre">model_computed_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ComputedFieldInfo</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#app.db.base.Base.model_computed_fields" title="Link to this definition"></a></dt>
+<dd><p>A dictionary of computed field names and their corresponding <cite>ComputedFieldInfo</cite> objects.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.base.Base.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'from_attributes':</span> <span class="pre">True,</span> <span class="pre">'registry':</span> <span class="pre">PydanticUndefined}</span></em><a class="headerlink" href="#app.db.base.Base.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.base.Base.model_fields">
+<span class="sig-name descname"><span class="pre">model_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">FieldInfo</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#app.db.base.Base.model_fields" title="Link to this definition"></a></dt>
+<dd><p>Metadata about the fields defined on the model,
+mapping of field names to [<cite>FieldInfo</cite>][pydantic.fields.FieldInfo].</p>
+<p>This replaces <cite>Model.__fields__</cite> from Pydantic V1.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.db.base.</span></span><span class="sig-name descname"><span class="pre">BaseRepository</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Session</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.add" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.commit">
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">commit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.commit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.commit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UUID</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.delete" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UUID</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.get" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.get_by_params">
+<span class="sig-name descname"><span class="pre">get_by_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.get_by_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.get_by_params" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.list">
+<span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.list" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#app.db.base.BaseRepository.model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.session">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">session</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Session</span></em><a class="headerlink" href="#app.db.base.BaseRepository.session" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.base.BaseRepository.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">T</span></span></span><a class="reference internal" href="_modules/app/db/base.html#BaseRepository.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.base.BaseRepository.update" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.db.repository">
+<span id="app-db-repository-module"></span><h2>app.db.repository module<a class="headerlink" href="#module-app.db.repository" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">app.db.repository.</span></span><span class="sig-name descname"><span class="pre">YoutubeDataRepository</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Session</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#app.db.base.BaseRepository" title="app.db.base.BaseRepository"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseRepository</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Channel</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_channel">
+<span class="sig-name descname"><span class="pre">add_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="app.html#app.schema.ChannelInfoSchema" title="app.schema.ChannelInfoSchema"><span class="pre">ChannelInfoSchema</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Channel</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_channel" title="Link to this definition"></a></dt>
+<dd><p>Adds a new channel or updates an existing one in the database based on the provided channel data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>channel_data</strong> (<a class="reference internal" href="app.html#app.schema.ChannelInfoSchema" title="app.schema.ChannelInfoSchema"><em>ChannelInfoSchema</em></a>) – A schema instance containing all necessary channel data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The newly added or updated channel entity.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Channel</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>SQLAlchemyError</strong> – If there is a database operation error.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method checks if a channel exists in the database based on the <cite>channel_id</cite> provided within
+the <cite>channel_data</cite>. If the channel exists, it updates its fields with the new data. If it does not exist,
+a new channel instance is created and added to the database. It commits the session after adding or
+updating the channel. Thumbnails associated with the channel are also added by invoking the <cite>add_thumbnail</cite> method.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_channel_history">
+<span class="sig-name descname"><span class="pre">add_channel_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Channel</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_channel_history"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_channel_history" title="Link to this definition"></a></dt>
+<dd><p>Adds historical data for a channel to the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>channel_info</strong> (<em>Channel</em>) – The channel object containing the data to record in history.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method creates a new ChannelHistory record using the data from the provided Channel object.
+The historical data includes the channel’s follower count, view count, and video count at the time of this call.
+The method logs the action and commits the new ChannelHistory record to the database.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_tag">
+<span class="sig-name descname"><span class="pre">add_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tag</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_tag" title="Link to this definition"></a></dt>
+<dd><p>Adds a new tag to the database or returns the existing one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tag_name</strong> (<em>str</em>) – The name of the tag to add or find.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Tag object either retrieved or created.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tag</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – Raises an exception if there’s a problem adding the tag to the database, including integrity errors.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method checks if the tag with the specified name exists in the database. If the tag does not exist, it creates
+a new Tag object, adds it to the session, and commits the session to save changes. If an error occurs during the
+database operation, it logs the error, rolls back the transaction, and re-raises the exception to ensure that
+database integrity is maintained and the error is not silently ignored.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_thumbnail">
+<span class="sig-name descname"><span class="pre">add_thumbnail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thumbnail_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="app.html#app.schema.ThumbnailSchema" title="app.schema.ThumbnailSchema"><span class="pre">ThumbnailSchema</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UUID</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Thumbnail</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_thumbnail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_thumbnail" title="Link to this definition"></a></dt>
+<dd><p>Adds a thumbnail to the database or returns the existing one based on the URL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>thumbnail_data</strong> (<a class="reference internal" href="app.html#app.schema.ThumbnailSchema" title="app.schema.ThumbnailSchema"><em>ThumbnailSchema</em></a>) – Data schema for the thumbnail.</p></li>
+<li><p><strong>video_id</strong> (<em>UUID</em><em>, </em><em>optional</em>) – UUID of the video the thumbnail is associated with.</p></li>
+<li><p><strong>channel_id</strong> (<em>str</em><em>, </em><em>optional</em>) – ID of the channel the thumbnail is associated with.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Thumbnail object either retrieved or created.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Thumbnail</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the provided video_id or channel_id does not correspond to any existing record.</p></li>
+<li><p><strong>Exception</strong> – If there is a problem with adding the thumbnail to the database.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method first checks if there’s an existing video or channel with the provided IDs. It then checks if
+a thumbnail with the same URL already exists. If it does, it returns that existing thumbnail. Otherwise,
+it creates a new Thumbnail object using the data provided, adds it to the session, and commits the session
+to save the changes. If any exception occurs during these operations, the transaction is rolled back and the
+exception is logged and re-raised.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_video">
+<span class="sig-name descname"><span class="pre">add_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="app.html#app.schema.VideoSchema" title="app.schema.VideoSchema"><span class="pre">VideoSchema</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Video</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_video" title="Link to this definition"></a></dt>
+<dd><p>Adds a new video or updates an existing one based on the provided video schema.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video_schema</strong> (<a class="reference internal" href="app.html#app.schema.VideoSchema" title="app.schema.VideoSchema"><em>VideoSchema</em></a>) – The schema containing video data.</p></li>
+<li><p><strong>channel_id</strong> (<em>str</em>) – The ID of the channel to which the video belongs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The newly added or updated video object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Video</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the channel associated with the video does not exist in the database.</p></li>
+<li><p><strong>SQLAlchemyError</strong> – If there is a database operation error.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method first checks if the channel exists in the database. If not, it raises a ValueError.
+If the channel exists, it checks if the video already exists. If it does not, it creates a new video object and
+adds it to the session. It then updates the video’s attributes with data from the video schema and commits the session.
+The method also manages tags and thumbnails by adding new ones or linking existing ones to the video.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_video_format">
+<span class="sig-name descname"><span class="pre">add_video_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="app.html#app.schema.YTFormatSchema" title="app.schema.YTFormatSchema"><span class="pre">YTFormatSchema</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">youtube_video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">YTFormat</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_video_format"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_video_format" title="Link to this definition"></a></dt>
+<dd><p>Adds or updates a video format in the database based on the provided format data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>format_data</strong> (<a class="reference internal" href="app.html#app.schema.YTFormatSchema" title="app.schema.YTFormatSchema"><em>YTFormatSchema</em></a>) – Data schema for the video format.</p></li>
+<li><p><strong>youtube_video_id</strong> (<em>str</em>) – YouTube video ID for which the format is being added or updated.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The newly created or updated YTFormat object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>YTFormat</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the video associated with youtube_video_id does not exist.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method retrieves a video by its YouTube video ID. If the video is found, it then checks if a format with
+the specified format ID already exists for that video. If it exists, the existing format is updated with the new
+data. If it does not exist, a new YTFormat object is created and added to the session. The changes are then
+committed to the database. If the video is not found, an error is logged, and None is returned.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.add_video_history">
+<span class="sig-name descname"><span class="pre">add_video_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Video</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.add_video_history"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.add_video_history" title="Link to this definition"></a></dt>
+<dd><p>Adds historical data for a video to the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_info</strong> (<em>Video</em>) – The video object containing the data to record in history.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method creates a new VideoHistory record using the data from the provided Video object.
+It captures the video’s view count, like count, and comment count at the time of this call.
+This historical record helps in tracking the performance of the video over time.
+The method logs the action and commits the new VideoHistory record to the database.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.bulk_add_tags">
+<span class="sig-name descname"><span class="pre">bulk_add_tags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.bulk_add_tags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.bulk_add_tags" title="Link to this definition"></a></dt>
+<dd><p>Adds multiple tags to the database if they do not already exist.</p>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method performs a bulk addition of tags to the database. It first retrieves all existing
+tags to ensure that no duplicates are created. It then filters out any tags already present
+in the database and adds only the new, unique tags. This approach minimizes database writes
+and ensures efficiency in handling large sets of tag data. If any integrity errors occur
+during the process (e.g., due to concurrent modifications), the transaction is rolled back,
+and an error is logged.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tags</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of tag names to be added to the database.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>IntegrityError</strong> – If a database integrity issue occurs during the tag addition process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.delete_video">
+<span class="sig-name descname"><span class="pre">delete_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UUID</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.delete_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.delete_video" title="Link to this definition"></a></dt>
+<dd><p>Deletes a video from the database by its unique identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>UUID</em>) – The unique identifier of the video to be deleted.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method attempts to retrieve a video by its unique identifier from the database.
+If the video is found, it is deleted from the database and the change is committed.
+If no video is found with the provided ID, a warning is logged to indicate that the video
+could not be found and no action is taken.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_channel_by_id">
+<span class="sig-name descname"><span class="pre">get_channel_by_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Channel</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_channel_by_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_channel_by_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_channel_id_by_url">
+<span class="sig-name descname"><span class="pre">get_channel_id_by_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_channel_id_by_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_channel_id_by_url" title="Link to this definition"></a></dt>
+<dd><p>Retrieves the channel ID based on a given channel URL from the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>channel_url</strong> (<em>str</em>) – The URL of the channel.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The channel ID if found, otherwise None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method attempts to find a channel by its URL in the database. If found, it returns the channel’s
+ID; otherwise, it logs a warning and returns None. This function allows for easy retrieval of channel
+IDs without exposing the underlying database query details, providing a clean interface for users who
+need to get channel IDs based on URLs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_channel_videos">
+<span class="sig-name descname"><span class="pre">get_channel_videos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Video</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_channel_videos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_channel_videos" title="Link to this definition"></a></dt>
+<dd><p>Retrieves all videos associated with a specific channel ID from the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>channel_id</strong> (<em>str</em>) – The unique identifier for the channel.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A list of Video objects associated with the given channel ID.</dt><dd><p>The list can be empty if no videos are found for the specified channel.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Video]</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method fetches all videos linked to a specific channel ID. It queries the Video table
+filtering by ‘channel_id’. If no videos are found matching the criteria, it returns an empty list
+and logs a warning. This method ensures that any consumer of the function can handle the output
+without having to deal with exceptions directly from the query.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_channels">
+<span class="sig-name descname"><span class="pre">get_channels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">page</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Channel</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_channels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_channels" title="Link to this definition"></a></dt>
+<dd><p>Retrieves a paginated list of channels from the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>limit</strong> (<em>int</em>) – The maximum number of channels to return.</p></li>
+<li><p><strong>page</strong> (<em>int</em>) – The page number to retrieve, based on the limit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of Channel objects. The list can be empty if no channels are found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Channel]</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method fetches a paginated list of channels sorted by their published date in ascending order.
+It utilizes SQL OFFSET for pagination, calculated as <cite>page * limit</cite>. This allows fetching subsets of
+channels for large datasets, reducing memory overhead and improving response times. If an error occurs
+during the query, it logs the error and returns an empty list to ensure the calling function can handle
+the result gracefully.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_new_and_existing_video_ids">
+<span class="sig-name descname"><span class="pre">get_new_and_existing_video_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_new_and_existing_video_ids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_new_and_existing_video_ids" title="Link to this definition"></a></dt>
+<dd><p>Determines which video IDs from a given list are new and which already exist in the database for a specific channel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video_ids</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of video IDs to check.</p></li>
+<li><p><strong>channel_id</strong> (<em>str</em>) – The ID of the channel to check against.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A tuple containing two lists:</dt><dd><ul class="simple">
+<li><p>The first list contains new video IDs that do not exist in the database.</p></li>
+<li><p>The second list contains existing video IDs that are already in the database.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[str], list[str]]</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method checks a list of video IDs against the ‘videos’ table in the database to determine which videos are
+new and which are already associated with a specific channel. This helps in filtering out videos that need
+to be added to the database and those that do not require action. The method uses a simple query to fetch
+existing video IDs for the specified channel and then compares them with the provided list of video IDs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_video_by_id">
+<span class="sig-name descname"><span class="pre">get_video_by_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">youtube_video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Video</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_video_by_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_video_by_id" title="Link to this definition"></a></dt>
+<dd><p>Retrieves a video from the database using its YouTube video ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>youtube_video_id</strong> (<em>str</em>) – The YouTube ID of the video to retrieve.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The retrieved video object if found, otherwise None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Video | None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method searches the database for a video that matches the given YouTube video ID.
+If found, it returns the Video object; otherwise, it logs a warning and returns None.
+This function is essential for operations that need to verify the existence of a video
+before performing further actions or updates based on that video.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_video_ids_without_formats">
+<span class="sig-name descname"><span class="pre">get_video_ids_without_formats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_video_ids_without_formats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_video_ids_without_formats" title="Link to this definition"></a></dt>
+<dd><p>Retrieves a list of video IDs that do not have any associated format entries, up to a specified limit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>limit</strong> (<em>int</em>) – The maximum number of video IDs to retrieve.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of video IDs that have no associated formats.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method queries the database to find videos that do not have associated format details in the
+‘video_formats’ table. It utilizes a subquery to find distinct video IDs in the ‘video_formats’
+table and then performs a LEFT OUTER JOIN to determine which videos from the ‘videos’ table do not
+have corresponding entries in the ‘video_formats’ table. This method is useful for identifying videos
+that need their format details updated or added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.get_videos_without_upload_date">
+<span class="sig-name descname"><span class="pre">get_videos_without_upload_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Video</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.get_videos_without_upload_date"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.get_videos_without_upload_date" title="Link to this definition"></a></dt>
+<dd><p>Retrieves a list of videos that do not have an upload date set, up to a specified limit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>limit</strong> (<em>int</em>) – The maximum number of videos to retrieve.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of videos without an upload date.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[Video]</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method queries the database to find videos where the upload date is not set. It provides an
+additional filter to include videos where the like count is either not set or not equal to -1,
+typically used to denote an error or placeholder value. This method is useful for identifying
+videos that might have incomplete data, allowing for further updates or corrections.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.model" title="Link to this definition"></a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Channel</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.reset_all_invalid_videos">
+<span class="sig-name descname"><span class="pre">reset_all_invalid_videos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.reset_all_invalid_videos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.reset_all_invalid_videos" title="Link to this definition"></a></dt>
+<dd><p>Resets the like count for all videos that have been marked as invalid in the database.</p>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method finds all videos in the database with a like count of -1, indicating they have
+been marked as invalid or erroneous in some way. It resets their like count to 0 to clear
+the invalid marker and commits these changes to the database. This operation helps in
+maintaining data integrity and cleaning up data flags that might have been set due to
+processing errors or other conditions. It logs the total number of videos updated to
+provide feedback on the scope of the operation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.set_video_as_invalid">
+<span class="sig-name descname"><span class="pre">set_video_as_invalid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.set_video_as_invalid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.set_video_as_invalid" title="Link to this definition"></a></dt>
+<dd><p>Marks a video as invalid by setting its like count to -1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>video_id</strong> (<em>str</em>) – The unique identifier of the video to mark as invalid.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method searches for a video by its unique video ID. If the video is found,
+it sets the like count to -1 to mark it as invalid, and commits the change to the
+database. If the video is not found, it logs an error message indicating that the
+video could not be found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.update_channel_details">
+<span class="sig-name descname"><span class="pre">update_channel_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="app.html#app.schema.ChannelAPIInfoSchema" title="app.schema.ChannelAPIInfoSchema"><span class="pre">ChannelAPIInfoSchema</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.update_channel_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.update_channel_details" title="Link to this definition"></a></dt>
+<dd><p>Updates the details of an existing channel or creates a new channel if it does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>channel_info</strong> (<a class="reference internal" href="app.html#app.schema.ChannelAPIInfoSchema" title="app.schema.ChannelAPIInfoSchema"><em>ChannelAPIInfoSchema</em></a>) – An object containing updated information about the channel.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method attempts to find a channel in the database using the ID provided in the <cite>channel_info</cite> object.
+If the channel exists, it updates the channel’s attributes with the new values from <cite>channel_info</cite>.
+If the channel does not exist, it creates a new <cite>Channel</cite> entity with the provided details and adds it to the database.
+This method handles updating or creating channels based on the dynamically provided channel information, ensuring data
+consistency and the addition of new channel data as needed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.update_thumbnail_path">
+<span class="sig-name descname"><span class="pre">update_thumbnail_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UUID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thumbnail_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thumbnail_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.update_thumbnail_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.update_thumbnail_path" title="Link to this definition"></a></dt>
+<dd><p>Updates the storage path for a specific video thumbnail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video_id</strong> (<em>UUID</em>) – The unique identifier of the video associated with the thumbnail.</p></li>
+<li><p><strong>thumbnail_url</strong> (<em>str</em>) – The URL of the thumbnail to update.</p></li>
+<li><p><strong>thumbnail_path</strong> (<em>Path</em>) – The new file path where the thumbnail should be stored.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method finds a thumbnail by its associated video ID and URL. If the thumbnail is found,
+its ‘thumbnail_path’ is updated to the new specified path, and the change is committed to the
+database. If no thumbnail matches the criteria, it logs a warning message indicating that the
+thumbnail could not be found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.update_video_details">
+<span class="sig-name descname"><span class="pre">update_video_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upload_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">like_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commentCount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defAudioLang</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.update_video_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.update_video_details" title="Link to this definition"></a></dt>
+<dd><p>Updates the details of an existing video with new information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video_id</strong> (<em>str</em>) – The ID of the video to update.</p></li>
+<li><p><strong>upload_date</strong> (<em>datetime</em>) – The new upload date for the video.</p></li>
+<li><p><strong>like_count</strong> (<em>int</em>) – The new like count for the video.</p></li>
+<li><p><strong>commentCount</strong> (<em>int</em>) – The new comment count for the video.</p></li>
+<li><p><strong>tags</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of new tags associated with the video.</p></li>
+<li><p><strong>defAudioLang</strong> (<em>str</em>) – The default audio language for the video.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method finds an existing video by <cite>video_id</cite> and updates its properties including
+upload date, like count, comment count, and default audio language. It also manages the
+relationship between the video and its tags. If the video is not found, it logs an error.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.db.repository.YoutubeDataRepository.update_video_path">
+<span class="sig-name descname"><span class="pre">update_video_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">video_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">UUID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/app/db/repository.html#YoutubeDataRepository.update_video_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.db.repository.YoutubeDataRepository.update_video_path" title="Link to this definition"></a></dt>
+<dd><p>Updates the file path where the video is stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>video_id</strong> (<em>UUID</em>) – The unique identifier for the video to update.</p></li>
+<li><p><strong>video_path</strong> (<em>Path</em>) – The new file path for the video.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Description:</dt><dd><p>This method updates the storage path of a video in the database. If the video with the specified
+ID exists, its ‘video_path’ attribute is updated to the new path. The method commits the change
+to the database. If the video does not exist, it logs a warning.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.db">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-app.db" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="app.html" class="btn btn-neutral float-left" title="app package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="app.integrations.html" class="btn btn-neutral float-right" title="app.integrations package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, mithmith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

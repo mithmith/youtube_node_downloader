@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.db.repository &mdash; Youtube node downloader 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Youtube node downloader
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../app.html">app package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Youtube node downloader</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">app.db.repository</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for app.db.repository</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">uuid4</span>
+
+<span class="kn">from</span> <span class="nn">loguru</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">or_</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.exc</span> <span class="kn">import</span> <span class="n">IntegrityError</span><span class="p">,</span> <span class="n">NoResultFound</span><span class="p">,</span> <span class="n">SQLAlchemyError</span>
+
+<span class="kn">from</span> <span class="nn">app.db.base</span> <span class="kn">import</span> <span class="n">BaseRepository</span>
+<span class="kn">from</span> <span class="nn">app.db.data_table</span> <span class="kn">import</span> <span class="n">Channel</span><span class="p">,</span> <span class="n">ChannelHistory</span><span class="p">,</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">Thumbnail</span><span class="p">,</span> <span class="n">Video</span><span class="p">,</span> <span class="n">VideoHistory</span><span class="p">,</span> <span class="n">VideoTag</span><span class="p">,</span> <span class="n">YTFormat</span>
+<span class="kn">from</span> <span class="nn">app.schema</span> <span class="kn">import</span> <span class="n">ChannelAPIInfoSchema</span><span class="p">,</span> <span class="n">ChannelInfoSchema</span><span class="p">,</span> <span class="n">ThumbnailSchema</span><span class="p">,</span> <span class="n">VideoSchema</span><span class="p">,</span> <span class="n">YTFormatSchema</span>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository">[docs]</a>
+<span class="k">class</span> <span class="nc">YoutubeDataRepository</span><span class="p">(</span><span class="n">BaseRepository</span><span class="p">[</span><span class="n">Channel</span><span class="p">]):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Channel</span>
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_channel">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_channel">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_data</span><span class="p">:</span> <span class="n">ChannelInfoSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Channel</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a new channel or updates an existing one in the database based on the provided channel data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel_data (ChannelInfoSchema): A schema instance containing all necessary channel data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Channel: The newly added or updated channel entity.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SQLAlchemyError: If there is a database operation error.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method checks if a channel exists in the database based on the `channel_id` provided within</span>
+<span class="sd">            the `channel_data`. If the channel exists, it updates its fields with the new data. If it does not exist,</span>
+<span class="sd">            a new channel instance is created and added to the database. It commits the session after adding or</span>
+<span class="sd">            updating the channel. Thumbnails associated with the channel are also added by invoking the `add_thumbnail` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">channel_id</span> <span class="o">=</span> <span class="n">channel_data</span><span class="o">.</span><span class="n">channel_id</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Channel</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">channel_id</span><span class="o">=</span><span class="n">channel_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+        <span class="n">channel_dict</span> <span class="o">=</span> <span class="n">channel_data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
+            <span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">exclude</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;entries&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;availability&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;thumbnails&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;uploader_id&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;uploader_url&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
+            <span class="c1"># Update the existing Channel object</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">channel_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Create a new Channel object and add it to the session</span>
+            <span class="n">channel</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="o">**</span><span class="n">channel_dict</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">thumbnail_schema</span> <span class="ow">in</span> <span class="n">channel_data</span><span class="o">.</span><span class="n">thumbnails</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_thumbnail</span><span class="p">(</span><span class="n">thumbnail_schema</span><span class="p">,</span> <span class="n">channel_id</span><span class="o">=</span><span class="n">channel_data</span><span class="o">.</span><span class="n">channel_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">channel</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_video">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_video">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_video</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_schema</span><span class="p">:</span> <span class="n">VideoSchema</span><span class="p">,</span> <span class="n">channel_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Video</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a new video or updates an existing one based on the provided video schema.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_schema (VideoSchema): The schema containing video data.</span>
+<span class="sd">            channel_id (str): The ID of the channel to which the video belongs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Video: The newly added or updated video object.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the channel associated with the video does not exist in the database.</span>
+<span class="sd">            SQLAlchemyError: If there is a database operation error.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method first checks if the channel exists in the database. If not, it raises a ValueError.</span>
+<span class="sd">            If the channel exists, it checks if the video already exists. If it does not, it creates a new video object and</span>
+<span class="sd">            adds it to the session. It then updates the video&#39;s attributes with data from the video schema and commits the session.</span>
+<span class="sd">            The method also manages tags and thumbnails by adding new ones or linking existing ones to the video.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if the channel exists</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Channel</span><span class="p">,</span> <span class="n">channel_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">channel</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel with ID </span><span class="si">{</span><span class="n">channel_id</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel not found&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">no_autoflush</span><span class="p">:</span>
+            <span class="c1"># Create or update the Video object</span>
+            <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video_schema</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">video</span><span class="p">:</span>
+                <span class="n">video</span> <span class="o">=</span> <span class="n">Video</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video_schema</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">channel_id</span><span class="o">=</span><span class="n">channel_id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">video</span><span class="p">)</span>
+
+            <span class="c1"># Set attributes from video schema</span>
+            <span class="n">upload_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">video_schema</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span> <span class="k">if</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">timestamp</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">title</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">description</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">url</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">duration</span> <span class="ow">or</span> <span class="mi">0</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">view_count</span> <span class="o">=</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">view_count</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">upload_date</span> <span class="o">=</span> <span class="n">upload_date</span>
+
+            <span class="c1"># Save the video to obtain video.id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+            <span class="c1"># Manage tags using bulk_add_tags</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bulk_add_tags</span><span class="p">(</span><span class="n">video_schema</span><span class="o">.</span><span class="n">tags</span><span class="p">)</span>
+
+            <span class="c1"># Create link between video and tags</span>
+            <span class="k">for</span> <span class="n">tag_name</span> <span class="ow">in</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+                <span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Tag</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag_name</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="n">existing_video_tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">VideoTag</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">tag_id</span><span class="o">=</span><span class="n">tag</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">existing_video_tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">video_tag</span> <span class="o">=</span> <span class="n">VideoTag</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">tag_id</span><span class="o">=</span><span class="n">tag</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">video_tag</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+            <span class="c1"># Add thumbnails</span>
+            <span class="k">for</span> <span class="n">thumbnail_schema</span> <span class="ow">in</span> <span class="n">video_schema</span><span class="o">.</span><span class="n">thumbnails</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_thumbnail</span><span class="p">(</span><span class="n">thumbnail_schema</span><span class="p">,</span> <span class="n">video</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video &#39;</span><span class="si">{</span><span class="n">video_schema</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">&#39; metadata added successfully.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">video</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_tag">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_tag">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tag</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a new tag to the database or returns the existing one.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tag_name (str): The name of the tag to add or find.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tag: The Tag object either retrieved or created.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Exception: Raises an exception if there&#39;s a problem adding the tag to the database, including integrity errors.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method checks if the tag with the specified name exists in the database. If the tag does not exist, it creates</span>
+<span class="sd">            a new Tag object, adds it to the session, and commits the session to save changes. If an error occurs during the</span>
+<span class="sd">            database operation, it logs the error, rolls back the transaction, and re-raises the exception to ensure that</span>
+<span class="sd">            database integrity is maintained and the error is not silently ignored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Tag</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag_name</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag_name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">tag</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error adding tag: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_thumbnail">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_thumbnail">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_thumbnail</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">thumbnail_data</span><span class="p">:</span> <span class="n">ThumbnailSchema</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Thumbnail</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a thumbnail to the database or returns the existing one based on the URL.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            thumbnail_data (ThumbnailSchema): Data schema for the thumbnail.</span>
+<span class="sd">            video_id (UUID, optional): UUID of the video the thumbnail is associated with.</span>
+<span class="sd">            channel_id (str, optional): ID of the channel the thumbnail is associated with.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Thumbnail: The Thumbnail object either retrieved or created.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the provided video_id or channel_id does not correspond to any existing record.</span>
+<span class="sd">            Exception: If there is a problem with adding the thumbnail to the database.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method first checks if there&#39;s an existing video or channel with the provided IDs. It then checks if</span>
+<span class="sd">            a thumbnail with the same URL already exists. If it does, it returns that existing thumbnail. Otherwise,</span>
+<span class="sd">            it creates a new Thumbnail object using the data provided, adds it to the session, and commits the session</span>
+<span class="sd">            to save the changes. If any exception occurs during these operations, the transaction is rolled back and the</span>
+<span class="sd">            exception is logged and re-raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">video_id</span><span class="p">:</span>
+                <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Video</span><span class="p">,</span> <span class="n">video_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">video</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with ID </span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Video not found&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">channel_id</span><span class="p">:</span>
+                <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Channel</span><span class="p">,</span> <span class="n">channel_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">channel</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel with ID </span><span class="si">{</span><span class="n">channel_id</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel not found&quot;</span><span class="p">)</span>
+
+            <span class="n">existing_thumbnail</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Thumbnail</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">thumbnail_data</span><span class="o">.</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">existing_thumbnail</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">existing_thumbnail</span>
+
+            <span class="n">thumbnail</span> <span class="o">=</span> <span class="n">Thumbnail</span><span class="p">(</span>
+                <span class="o">**</span><span class="n">thumbnail_data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">}),</span>
+                <span class="n">video_id</span><span class="o">=</span><span class="n">video</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">video_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">channel_id</span><span class="o">=</span><span class="n">channel</span><span class="o">.</span><span class="n">channel_id</span> <span class="k">if</span> <span class="n">channel_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">uuid4</span><span class="p">(),</span>
+                <span class="n">thumbnail_id</span><span class="o">=</span><span class="n">thumbnail_data</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">thumbnail</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">thumbnail</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error adding thumbnail: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_video_format">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_video_format">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_video_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_data</span><span class="p">:</span> <span class="n">YTFormatSchema</span><span class="p">,</span> <span class="n">youtube_video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">YTFormat</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds or updates a video format in the database based on the provided format data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            format_data (YTFormatSchema): Data schema for the video format.</span>
+<span class="sd">            youtube_video_id (str): YouTube video ID for which the format is being added or updated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            YTFormat: The newly created or updated YTFormat object.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the video associated with youtube_video_id does not exist.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method retrieves a video by its YouTube video ID. If the video is found, it then checks if a format with</span>
+<span class="sd">            the specified format ID already exists for that video. If it exists, the existing format is updated with the new</span>
+<span class="sd">            data. If it does not exist, a new YTFormat object is created and added to the session. The changes are then</span>
+<span class="sd">            committed to the database. If the video is not found, an error is logged, and None is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">youtube_video_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">video</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with youtube_video_id &#39;</span><span class="si">{</span><span class="n">youtube_video_id</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Video not found&quot;</span><span class="p">)</span>
+
+        <span class="n">format_dict</span> <span class="o">=</span> <span class="n">format_data</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">yt_format</span><span class="p">:</span> <span class="n">YTFormat</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">YTFormat</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">format_id</span><span class="o">=</span><span class="n">format_dict</span><span class="p">[</span><span class="s2">&quot;format_id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">yt_format</span><span class="p">:</span>
+            <span class="c1"># Update existing format</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">format_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">yt_format</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Create new format object and add to session</span>
+            <span class="n">format_dict</span><span class="p">[</span><span class="s2">&quot;video_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">video</span><span class="o">.</span><span class="n">id</span>
+            <span class="n">new_format</span> <span class="o">=</span> <span class="n">YTFormat</span><span class="p">(</span><span class="o">**</span><span class="n">format_dict</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_format</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">yt_format</span> <span class="k">if</span> <span class="n">yt_format</span> <span class="k">else</span> <span class="n">new_format</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_channel_history">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_channel_history">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_channel_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_info</span><span class="p">:</span> <span class="n">Channel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds historical data for a channel to the database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel_info (Channel): The channel object containing the data to record in history.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method creates a new ChannelHistory record using the data from the provided Channel object.</span>
+<span class="sd">            The historical data includes the channel&#39;s follower count, view count, and video count at the time of this call.</span>
+<span class="sd">            The method logs the action and commits the new ChannelHistory record to the database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">history</span><span class="p">:</span> <span class="n">ChannelHistory</span> <span class="o">=</span> <span class="n">ChannelHistory</span><span class="p">(</span>
+            <span class="n">channel_id</span><span class="o">=</span><span class="n">channel_info</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">follower_count</span><span class="o">=</span><span class="n">channel_info</span><span class="o">.</span><span class="n">channel_follower_count</span><span class="p">,</span>
+            <span class="n">view_count</span><span class="o">=</span><span class="n">channel_info</span><span class="o">.</span><span class="n">viewCount</span><span class="p">,</span>
+            <span class="n">video_count</span><span class="o">=</span><span class="n">channel_info</span><span class="o">.</span><span class="n">videoCount</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">history</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.add_video_history">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.add_video_history">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_video_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_info</span><span class="p">:</span> <span class="n">Video</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds historical data for a video to the database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_info (Video): The video object containing the data to record in history.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method creates a new VideoHistory record using the data from the provided Video object.</span>
+<span class="sd">            It captures the video&#39;s view count, like count, and comment count at the time of this call.</span>
+<span class="sd">            This historical record helps in tracking the performance of the video over time.</span>
+<span class="sd">            The method logs the action and commits the new VideoHistory record to the database.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">history</span><span class="p">:</span> <span class="n">VideoHistory</span> <span class="o">=</span> <span class="n">VideoHistory</span><span class="p">(</span>
+            <span class="n">video_id</span><span class="o">=</span><span class="n">video_info</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">view_count</span><span class="o">=</span><span class="n">video_info</span><span class="o">.</span><span class="n">view_count</span><span class="p">,</span>
+            <span class="n">like_count</span><span class="o">=</span><span class="n">video_info</span><span class="o">.</span><span class="n">like_count</span><span class="p">,</span>
+            <span class="n">comment_count</span><span class="o">=</span><span class="n">video_info</span><span class="o">.</span><span class="n">comment_count</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">history</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_channel_by_id">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_channel_by_id">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_channel_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Channel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Channel</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">channel_id</span><span class="o">=</span><span class="n">channel_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">channel</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel with youtube channel_id &#39;</span><span class="si">{</span><span class="n">channel_id</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_video_by_id">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_video_by_id">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_video_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">youtube_video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Video</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves a video from the database using its YouTube video ID.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            youtube_video_id (str): The YouTube ID of the video to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Video | None: The retrieved video object if found, otherwise None.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method searches the database for a video that matches the given YouTube video ID.</span>
+<span class="sd">            If found, it returns the Video object; otherwise, it logs a warning and returns None.</span>
+<span class="sd">            This function is essential for operations that need to verify the existence of a video</span>
+<span class="sd">            before performing further actions or updates based on that video.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">youtube_video_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">video</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">video</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with youtube video_id &#39;</span><span class="si">{</span><span class="n">youtube_video_id</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_channels">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_channels">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Channel</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves a paginated list of channels from the database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            limit (int): The maximum number of channels to return.</span>
+<span class="sd">            page (int): The page number to retrieve, based on the limit.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Channel]: A list of Channel objects. The list can be empty if no channels are found.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method fetches a paginated list of channels sorted by their published date in ascending order.</span>
+<span class="sd">            It utilizes SQL OFFSET for pagination, calculated as `page * limit`. This allows fetching subsets of</span>
+<span class="sd">            channels for large datasets, reducing memory overhead and improving response times. If an error occurs</span>
+<span class="sd">            during the query, it logs the error and returns an empty list to ensure the calling function can handle</span>
+<span class="sd">            the result gracefully.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Channel</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">Channel</span><span class="o">.</span><span class="n">published_at</span><span class="o">.</span><span class="n">asc</span><span class="p">())</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">page</span> <span class="o">*</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">SQLAlchemyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error retrieving channels: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_channel_videos">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_channel_videos">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_channel_videos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Video</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves all videos associated with a specific channel ID from the database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel_id (str): The unique identifier for the channel.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Video]: A list of Video objects associated with the given channel ID.</span>
+<span class="sd">                        The list can be empty if no videos are found for the specified channel.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method fetches all videos linked to a specific channel ID. It queries the Video table</span>
+<span class="sd">            filtering by &#39;channel_id&#39;. If no videos are found matching the criteria, it returns an empty list</span>
+<span class="sd">            and logs a warning. This method ensures that any consumer of the function can handle the output</span>
+<span class="sd">            without having to deal with exceptions directly from the query.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">channel_id</span><span class="o">=</span><span class="n">channel_id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">NoResultFound</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No videos found for channel ID </span><span class="si">{</span><span class="n">channel_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_channel_id_by_url">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_channel_id_by_url">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_channel_id_by_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves the channel ID based on a given channel URL from the database.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel_url (str): The URL of the channel.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str | None: The channel ID if found, otherwise None.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method attempts to find a channel by its URL in the database. If found, it returns the channel&#39;s</span>
+<span class="sd">            ID; otherwise, it logs a warning and returns None. This function allows for easy retrieval of channel</span>
+<span class="sd">            IDs without exposing the underlying database query details, providing a clean interface for users who</span>
+<span class="sd">            need to get channel IDs based on URLs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Channel</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">channel_url</span><span class="o">=</span><span class="n">channel_url</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">channel</span><span class="o">.</span><span class="n">channel_id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel with URL </span><span class="si">{</span><span class="n">channel_url</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_videos_without_upload_date">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_videos_without_upload_date">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_videos_without_upload_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Video</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves a list of videos that do not have an upload date set, up to a specified limit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            limit (int): The maximum number of videos to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[Video]: A list of videos without an upload date.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method queries the database to find videos where the upload date is not set. It provides an</span>
+<span class="sd">            additional filter to include videos where the like count is either not set or not equal to -1,</span>
+<span class="sd">            typically used to denote an error or placeholder value. This method is useful for identifying</span>
+<span class="sd">            videos that might have incomplete data, allowing for further updates or corrections.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Video</span><span class="o">.</span><span class="n">upload_date</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="n">Video</span><span class="o">.</span><span class="n">like_count</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="n">Video</span><span class="o">.</span><span class="n">like_count</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_video_ids_without_formats">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_video_ids_without_formats">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_video_ids_without_formats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves a list of video IDs that do not have any associated format entries, up to a specified limit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            limit (int): The maximum number of video IDs to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[str]: A list of video IDs that have no associated formats.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method queries the database to find videos that do not have associated format details in the</span>
+<span class="sd">            &#39;video_formats&#39; table. It utilizes a subquery to find distinct video IDs in the &#39;video_formats&#39;</span>
+<span class="sd">            table and then performs a LEFT OUTER JOIN to determine which videos from the &#39;videos&#39; table do not</span>
+<span class="sd">            have corresponding entries in the &#39;video_formats&#39; table. This method is useful for identifying videos</span>
+<span class="sd">            that need their format details updated or added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Creating a subquery to get distinct video IDs from the video_formats table</span>
+        <span class="n">subquery</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">YTFormat</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">subquery</span><span class="p">()</span>
+
+        <span class="c1"># Main query using LEFT OUTER JOIN and filtering to ensure we return only videos without format entries</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">outerjoin</span><span class="p">(</span><span class="n">subquery</span><span class="p">,</span> <span class="n">Video</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">subquery</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">subquery</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">video_id</span> <span class="o">==</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Executing the query and returning the results</span>
+        <span class="n">video_ids</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+        <span class="c1"># Converting the results to a list of strings</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">video_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">video_id</span> <span class="ow">in</span> <span class="n">video_ids</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.get_new_and_existing_video_ids">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.get_new_and_existing_video_ids">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_new_and_existing_video_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">channel_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines which video IDs from a given list are new and which already exist in the database for a specific channel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_ids (list[str]): A list of video IDs to check.</span>
+<span class="sd">            channel_id (str): The ID of the channel to check against.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[list[str], list[str]]: A tuple containing two lists:</span>
+<span class="sd">                - The first list contains new video IDs that do not exist in the database.</span>
+<span class="sd">                - The second list contains existing video IDs that are already in the database.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method checks a list of video IDs against the &#39;videos&#39; table in the database to determine which videos are</span>
+<span class="sd">            new and which are already associated with a specific channel. This helps in filtering out videos that need</span>
+<span class="sd">            to be added to the database and those that do not require action. The method uses a simple query to fetch</span>
+<span class="sd">            existing video IDs for the specified channel and then compares them with the provided list of video IDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">existing_v_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">v_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">v_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="o">.</span><span class="n">video_id</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Video</span><span class="o">.</span><span class="n">channel_id</span> <span class="o">==</span> <span class="n">channel_id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">new_v_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">v_id</span> <span class="k">for</span> <span class="n">v_id</span> <span class="ow">in</span> <span class="n">video_ids</span> <span class="k">if</span> <span class="n">v_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_v_ids</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">new_v_ids</span><span class="p">,</span> <span class="n">existing_v_ids</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.update_channel_details">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.update_channel_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_channel_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_info</span><span class="p">:</span> <span class="n">ChannelAPIInfoSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the details of an existing channel or creates a new channel if it does not exist.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel_info (ChannelAPIInfoSchema): An object containing updated information about the channel.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method attempts to find a channel in the database using the ID provided in the `channel_info` object.</span>
+<span class="sd">            If the channel exists, it updates the channel&#39;s attributes with the new values from `channel_info`.</span>
+<span class="sd">            If the channel does not exist, it creates a new `Channel` entity with the provided details and adds it to the database.</span>
+<span class="sd">            This method handles updating or creating channels based on the dynamically provided channel information, ensuring data</span>
+<span class="sd">            consistency and the addition of new channel data as needed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Retrieve the channel from the database</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">Channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Channel</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">channel_id</span><span class="o">=</span><span class="n">channel_info</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+        <span class="c1"># Convert ChannelAPIInfoSchema to dictionary, excluding unset values</span>
+        <span class="n">channel_dict</span> <span class="o">=</span> <span class="n">channel_info</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">channel</span><span class="p">:</span>
+            <span class="c1"># If the channel exists, update its attributes</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">channel_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>  <span class="c1"># Update attribute if it exists on the channel model</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If the channel does not exist, create a new one using data from channel_info</span>
+            <span class="n">new_channel_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">channel_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">Channel</span><span class="p">,</span> <span class="n">key</span><span class="p">)}</span>
+            <span class="n">new_channel</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="o">**</span><span class="n">new_channel_data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.update_video_details">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.update_video_details">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_video_details</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">upload_date</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+        <span class="n">like_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">commentCount</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">defAudioLang</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the details of an existing video with new information.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_id (str): The ID of the video to update.</span>
+<span class="sd">            upload_date (datetime): The new upload date for the video.</span>
+<span class="sd">            like_count (int): The new like count for the video.</span>
+<span class="sd">            commentCount (int): The new comment count for the video.</span>
+<span class="sd">            tags (List[str]): A list of new tags associated with the video.</span>
+<span class="sd">            defAudioLang (str): The default audio language for the video.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method finds an existing video by `video_id` and updates its properties including</span>
+<span class="sd">            upload date, like count, comment count, and default audio language. It also manages the</span>
+<span class="sd">            relationship between the video and its tags. If the video is not found, it logs an error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">video</span><span class="p">:</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">upload_date</span> <span class="o">=</span> <span class="n">upload_date</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">like_count</span> <span class="o">=</span> <span class="n">like_count</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">comment_count</span> <span class="o">=</span> <span class="n">commentCount</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">defaultAudioLanguage</span> <span class="o">=</span> <span class="n">defAudioLang</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bulk_add_tags</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+                <span class="c1"># Retrieve all existing tag IDs that match the provided tag names</span>
+                <span class="n">existing_tag_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">tag</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Tag</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Tag</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">(</span><span class="n">tags</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
+                <span class="c1"># Delete existing relationships between the video and tags to update with new ones</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">VideoTag</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">VideoTag</span><span class="o">.</span><span class="n">video_id</span> <span class="o">==</span> <span class="n">video</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">synchronize_session</span><span class="o">=</span><span class="s2">&quot;fetch&quot;</span><span class="p">)</span>
+                <span class="c1"># Create new relationships between the video and tags</span>
+                <span class="k">for</span> <span class="n">tag_id</span> <span class="ow">in</span> <span class="n">existing_tag_ids</span><span class="p">:</span>
+                    <span class="n">video_tag</span> <span class="o">=</span> <span class="n">VideoTag</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">tag_id</span><span class="o">=</span><span class="n">tag_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">video_tag</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with ID </span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2"> not found in the database.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.update_video_path">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.update_video_path">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_video_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">video_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the file path where the video is stored.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_id (UUID): The unique identifier for the video to update.</span>
+<span class="sd">            video_path (Path): The new file path for the video.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method updates the storage path of a video in the database. If the video with the specified</span>
+<span class="sd">            ID exists, its &#39;video_path&#39; attribute is updated to the new path. The method commits the change</span>
+<span class="sd">            to the database. If the video does not exist, it logs a warning.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">video_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">video</span><span class="p">:</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">video_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">video_path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with ID </span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.update_thumbnail_path">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.update_thumbnail_path">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_thumbnail_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">thumbnail_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">thumbnail_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the storage path for a specific video thumbnail.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_id (UUID): The unique identifier of the video associated with the thumbnail.</span>
+<span class="sd">            thumbnail_url (str): The URL of the thumbnail to update.</span>
+<span class="sd">            thumbnail_path (Path): The new file path where the thumbnail should be stored.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method finds a thumbnail by its associated video ID and URL. If the thumbnail is found,</span>
+<span class="sd">            its &#39;thumbnail_path&#39; is updated to the new specified path, and the change is committed to the</span>
+<span class="sd">            database. If no thumbnail matches the criteria, it logs a warning message indicating that the</span>
+<span class="sd">            thumbnail could not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">thumbnail</span><span class="p">:</span> <span class="n">Thumbnail</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Thumbnail</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">thumbnail_url</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">thumbnail</span><span class="p">:</span>
+            <span class="n">thumbnail</span><span class="o">.</span><span class="n">thumbnail_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">thumbnail_path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Thumbnail not found for video ID </span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2"> with URL </span><span class="si">{</span><span class="n">thumbnail_url</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.set_video_as_invalid">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.set_video_as_invalid">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_video_as_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Marks a video as invalid by setting its like count to -1.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_id (str): The unique identifier of the video to mark as invalid.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method searches for a video by its unique video ID. If the video is found,</span>
+<span class="sd">            it sets the like count to -1 to mark it as invalid, and commits the change to the</span>
+<span class="sd">            database. If the video is not found, it logs an error message indicating that the</span>
+<span class="sd">            video could not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">video_id</span><span class="o">=</span><span class="n">video_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">video</span><span class="p">:</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">like_count</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with ID </span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2"> not found in the database.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.delete_video">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.delete_video">[docs]</a>
+    <span class="k">def</span> <span class="nf">delete_video</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">video_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deletes a video from the database by its unique identifier.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            video_id (UUID): The unique identifier of the video to be deleted.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method attempts to retrieve a video by its unique identifier from the database.</span>
+<span class="sd">            If the video is found, it is deleted from the database and the change is committed.</span>
+<span class="sd">            If no video is found with the provided ID, a warning is logged to indicate that the video</span>
+<span class="sd">            could not be found and no action is taken.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">video</span><span class="p">:</span> <span class="n">Video</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Video</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">video_id</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">video</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">video</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Video with ID </span><span class="si">{</span><span class="n">video_id</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.reset_all_invalid_videos">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.reset_all_invalid_videos">[docs]</a>
+    <span class="k">def</span> <span class="nf">reset_all_invalid_videos</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets the like count for all videos that have been marked as invalid in the database.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method finds all videos in the database with a like count of -1, indicating they have</span>
+<span class="sd">            been marked as invalid or erroneous in some way. It resets their like count to 0 to clear</span>
+<span class="sd">            the invalid marker and commits these changes to the database. This operation helps in</span>
+<span class="sd">            maintaining data integrity and cleaning up data flags that might have been set due to</span>
+<span class="sd">            processing errors or other conditions. It logs the total number of videos updated to</span>
+<span class="sd">            provide feedback on the scope of the operation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">videos</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Video</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Video</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Video</span><span class="o">.</span><span class="n">like_count</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">video</span> <span class="ow">in</span> <span class="n">videos</span><span class="p">:</span>
+            <span class="n">video</span><span class="o">.</span><span class="n">like_count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Reset the failure marker to a neutral/initial value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reset invalid markers for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">videos</span><span class="p">)</span><span class="si">}</span><span class="s2"> videos.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YoutubeDataRepository.bulk_add_tags">
+<a class="viewcode-back" href="../../../app.db.html#app.db.repository.YoutubeDataRepository.bulk_add_tags">[docs]</a>
+    <span class="k">def</span> <span class="nf">bulk_add_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds multiple tags to the database if they do not already exist.</span>
+
+<span class="sd">        Description:</span>
+<span class="sd">            This method performs a bulk addition of tags to the database. It first retrieves all existing</span>
+<span class="sd">            tags to ensure that no duplicates are created. It then filters out any tags already present</span>
+<span class="sd">            in the database and adds only the new, unique tags. This approach minimizes database writes</span>
+<span class="sd">            and ensures efficiency in handling large sets of tag data. If any integrity errors occur</span>
+<span class="sd">            during the process (e.g., due to concurrent modifications), the transaction is rolled back,</span>
+<span class="sd">            and an error is logged.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            tags (list[str]): A list of tag names to be added to the database.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            IntegrityError: If a database integrity issue occurs during the tag addition process.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">existing_tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tag</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Tag</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Tag</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">(</span><span class="n">tags</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="n">existing_tag_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">existing_tags</span><span class="p">}</span>
+
+        <span class="c1"># Ensure new tags are unique before adding</span>
+        <span class="n">unique_new_tags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">-</span> <span class="n">existing_tag_names</span>
+        <span class="n">new_tags</span> <span class="o">=</span> <span class="p">[</span><span class="n">Tag</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">tag_name</span> <span class="ow">in</span> <span class="n">unique_new_tags</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">new_tags</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">bulk_save_objects</span><span class="p">(</span><span class="n">new_tags</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">IntegrityError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>  <span class="c1"># Rollback transaction in case of an error</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during bulk add tags: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, mithmith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
