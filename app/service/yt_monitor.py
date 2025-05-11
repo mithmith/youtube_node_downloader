@@ -334,8 +334,8 @@ class YTMonitorService:
 
     def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> Path:
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        return (self._short_download_path / video_file_name)
+        return self._short_download_path / video_file_name
 
     def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> Path:
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        return (self._video_download_path / video_file_name)
+        return self._video_download_path / video_file_name
