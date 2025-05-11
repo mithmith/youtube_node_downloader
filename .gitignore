@@ -12,12 +12,14 @@ yt-dlp
 *.pyo
 __pycache__/
 .pytest_cache/
+.mypy_cache/
 
 # Файл со списком каналов для мониторинга
-channels_list.json
+*_channels*.json
 
 # Игнорирование файлов с секретами и ключи
 .env
+*.env
 *oauth2*.json
 *secret*.json
 *.pickle
@@ -42,6 +44,7 @@ dist/
 # Игнорирование зависимостей
 node_modules/
 venv/
+.venv/
 *.wheel
 
 # Игнорирование IDE и редакторов

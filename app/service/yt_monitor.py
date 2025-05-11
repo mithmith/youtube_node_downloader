@@ -17,20 +17,24 @@ class YTMonitorService:
     def __init__(
         self,
         channels_list: list[str],
-        new_videos_timeout: int = 600,
-        history_timeout: int = 4 * 60 * 60,
+        channels_name: Optional[str] = None,
+        new_videos_timeout: int = 15 * 60,
+        history_timeout: int = 8 * 60 * 60,
         new_videos_queue: Optional[Queue] = None,
         shorts_videos_queue: Optional[Queue] = None,
     ) -> None:
         if isinstance(channels_list, str):
             channels_list = [channels_list]
         self._channels_list = channels_list
+        self._channels_name = channels_name
         self._new_videos_timeout = new_videos_timeout
         self._history_timeout = history_timeout
         self._queue = new_videos_queue  # Очередь для обработки новых видео
         self._shorts_publish_queue = shorts_videos_queue
         self._download_queue = Queue()
         self._shorts_publish = settings.run_tg_bot_shorts_publish
+        self._short_download_path = Path(settings.storage_path).expanduser().resolve() / settings.shorts_download_path
+        self._video_download_path = Path(settings.storage_path).expanduser().resolve() / settings.video_download_path
 
     def run(
         self, monitor_new: bool = True, monitor_history: bool = True, monitor_video_formats: bool = True
@@ -132,7 +136,7 @@ class YTMonitorService:
             logger.error(f"Failed to retrieve channel info for {channel_url}. Skipping...")
             return
 
-        api_client = YTApiClient(over_ssh_tunnel=False)
+        api_client = YTApiClient(over_ssh_tunnel=settings.use_ssh_tunnel)
         # Если канала нет в БД, до дополняем о нём информацию через API и добавляем в БД
         if not yt_dlp_client.channel_exist(ytdlp_channel_info.channel_id):
             logger.debug("Channel not found in database! Updating...")
@@ -224,7 +228,7 @@ class YTMonitorService:
                                 video_title=video.title,
                                 video_url=video.url,
                                 video_id=video.id,
-                                video_file_download_path=new_shorts_path,
+                                video_file_download_path=str(new_shorts_path),
                             )
                         )
         if process_old and old_videos:
@@ -256,7 +260,7 @@ class YTMonitorService:
         """
         with Session() as session:
             repository = YoutubeDataRepository(session)
-            channel = repository.upsert_channel(channel_info)
+            channel = repository.upsert_channel(channel_info, self._channels_name)
             if add_history:
                 repository.add_channel_history(channel)
 
@@ -328,14 +332,10 @@ class YTMonitorService:
                 repository.update_video(video_schema)
                 repository.add_video_history(video_schema)
 
-    def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
-        # (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
+    def _generate_shorts_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> Path:
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        short_download_path = Path(settings.storage_path) / settings.shorts_download_path
-        return str(short_download_path / video_file_name)
+        return self._short_download_path / video_file_name
 
-    def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> str:
-        # (ytdlp_channel_info.original_url or ytdlp_channel_info.channel)
+    def _generate_videos_download_path(self, channel_name: str, video_id: str, format: str = "mp4") -> Path:
         video_file_name = f"{channel_name}_{video_id}.{format}"
-        video_download_path = Path(settings.storage_path) / settings.video_download_path
-        return str(video_download_path / video_file_name)
+        return self._video_download_path / video_file_name

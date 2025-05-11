@@ -1,42 +1,50 @@
 # Базовый образ для Python
-FROM python:3.10-slim as base
+FROM python:3.12-slim AS base
 
 # Сборка зависимостей
 FROM base AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install -y python3-pip && \
-    apt-get install -y wget curl build-essential cmake make && \
-    apt-get install -y gcc-aarch64-linux-gnu python3-dev && \
-    apt-get clean autoclean
+    apt-get install -y python3-pip wget curl build-essential cmake make \
+                       gcc-aarch64-linux-gnu python3-dev && \
+    apt-get clean autoclean && rm -rf /var/lib/apt/lists/*
+
+# Скачиваем yt-dlp и делаем его исполняемым
+RUN wget -q https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
 
-# Копируем зависимости Poetry
-COPY poetry.lock* pyproject.toml ./ 
+# Копируем файлы для установки зависимостей
+COPY poetry.lock pyproject.toml ./
 
 # Устанавливаем Poetry и зависимости
-RUN mkdir -p ~/.config/pip && \
-    python3 -m pip install --disable-pip-version-check -U pip wheel poetry && \
+RUN python3 -m pip install --disable-pip-version-check -U pip wheel poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-root --no-interaction --no-ansi
 
-# Копируем исходный код проекта
+# Копируем весь проект
 COPY . .
 
 # Создание финального образа
 FROM base
-
 WORKDIR /app
 
-# Копируем проект из этапа сборки
-COPY --from=builder /app ./
+# Устанавливаем proxychains4 в финальном образе
+RUN apt-get update && \
+    apt-get install -y proxychains && \
+    apt-get clean autoclean && rm -rf /var/lib/apt/lists/*
 
-# Настройка переменных среды
-ENV VIRTUAL_ENV=/app/.venv
-ENV PATH="/app/.venv/bin:$PATH"
+# Копируем проект и установленные зависимости из builder
+COPY --from=builder /app /app
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Копируем локальный конфиг proxychains внутрь контейнера
+COPY proxychains.conf /etc/proxychains.conf
+
+RUN mkdir -p /app/logs && chmod 777 /app/logs
 ENV PYTHONPATH=/app
-
 # Указываем команду для запуска
-CMD ["python3", "-m", "app"]
+CMD ["/bin/sh", "-c", "${USE_PROXY:+proxychains} python3 -m app"]

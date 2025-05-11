@@ -46,6 +46,7 @@ class Channel(Base, table=True):
     banner_path: Optional[str] = Field(default=None)
     avatar_path: Optional[str] = Field(default=None)
     last_update: datetime = Field(default_factory=lambda: datetime.now().replace(microsecond=0))
+    list_name: Optional[str] = Field(default=None)
 
     thumbnails: List["Thumbnail"] = Relationship(back_populates="channel")
     videos: List["Video"] = Relationship(back_populates="channel")

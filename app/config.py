@@ -1,6 +1,7 @@
 import os
 import sys
 from functools import lru_cache
+from pathlib import Path
 
 from loguru import logger as log
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,17 +11,18 @@ class Settings(BaseSettings):
     app_host: str = "localhost"
     app_port: int = 9191
 
+    channels_list_path: str = "channels_list.json"
     storage_path: str = "/mnt/volume"
     video_download_path: str = "videos"
     shorts_download_path: str = "shorts"
-    thumbnail_download_path: str = "videos/thumbnail"
+    thumbnail_download_path: str = "thumbnails"
 
     db_host: str = "localhost"
     db_port: int = 5432
-    db_name: str = "peer_tube_db"
+    db_name: str = "youtube_db"
     db_schema: str = "youtube"
-    db_username: str = "peer_tube_user"
-    db_password: str = "peer_tube_password"
+    db_username: str = "you_tube_db_user"
+    db_password: str = "you_tube_db_password"
 
     monitor_new: bool = True
     monitor_history: bool = False
@@ -35,7 +37,13 @@ class Settings(BaseSettings):
     tg_bot_token: str = "TELEGRAM_BOT_TOKEN"
     tg_group_id: str = "group_id"
     tg_admin_id: int = 0
+    tg_new_video_template: Path = "./templates/new_video.md"
+    tg_shorts_template: Path = "./templates/shorts.md"
+    tg_new_video_template_default: Path = "./templates/new_video.md"
+    tg_shorts_template_default: Path = "./templates/shorts.md"
 
+    use_proxy: bool = False
+    use_ssh_tunnel: bool = False
     ssh_host: str = "localhost"
     ssh_port: int = 22
     ssh_user: str = "root"
@@ -57,6 +65,13 @@ class Settings(BaseSettings):
             f"postgresql+psycopg2://{self.db_username}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
         )
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tg_new_video_template = Path(self.tg_new_video_template).resolve()
+        self.tg_shorts_template = Path(self.tg_shorts_template).resolve()
+        self.tg_new_video_template_default = Path(self.tg_new_video_template_default).resolve()
+        self.tg_shorts_template_default = Path(self.tg_shorts_template_default).resolve()
+
 
 @lru_cache()
 def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):
@@ -66,7 +81,7 @@ def get_logger(log_lvl: str, log_dir: str, log_to_file: bool):
         "| <cyan>{file.name}:{line}</cyan> - <level>{message}</level>"
     )
     log_format_file = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level:<8} | {file.name}:{line} - {message}"
-    
+
     log.remove()
     log.add(sys.stderr, level=log_lvl, format=log_format_console, colorize=True, enqueue=True)
     if log_to_file:

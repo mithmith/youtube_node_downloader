@@ -1,4 +1,6 @@
 {
+    "name": "my_channels_list_name",
+    "description": "Channels list description...",
     "channels": [
         "https://www.youtube.com/@lexfridman",
         "https://www.youtube.com/@AsmonTV",

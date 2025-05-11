@@ -1,11 +1,12 @@
 import asyncio
-import os
 import time
 from asyncio import AbstractEventLoop
 from multiprocessing import Process, Queue
+from pathlib import Path
 from queue import Empty
 
-from telegram import Bot, Update
+from jinja2 import Template, TemplateSyntaxError
+from telegram import Bot, LinkPreviewOptions, Update
 from telegram.error import TelegramError
 from telegram.ext import Application
 from telegram.helpers import escape_markdown
@@ -13,6 +14,7 @@ from telegram.helpers import escape_markdown
 from app.config import logger, settings
 from app.integrations.telegram import get_telegram_handlers
 from app.schema import NewVideoSchema, VideoDownloadSchema
+from app.service.utils import extract_hashtags, get_channel_hashtag
 
 
 class TelegramBotService:
@@ -114,7 +116,7 @@ class TelegramBotService:
                 )
                 logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
-                await self._send_message_with_retries(bot, chat_id=self._group_id, text=message)
+                await self._send_message_with_retries(bot, self._group_id, message, video_url=video.video_url)
 
                 # Задержка между отправками сообщений
                 await asyncio.sleep(self._delay)
@@ -145,7 +147,7 @@ class TelegramBotService:
                 logger.info(f"(TGBot) Sending message to {self._group_id}:\n{message}")
 
                 await self._send_message_with_retries(
-                    bot, self._group_id, message, video_path=video.video_file_download_path
+                    bot, self._group_id, message, video_path=Path(video.video_file_download_path)
                 )
 
                 # Задержка между отправками сообщений
@@ -157,7 +159,9 @@ class TelegramBotService:
             except Exception as e:
                 logger.error(f"(TGBot) Ошибка при отправке сообщения: {e}")
 
-    async def _send_message_with_retries(self, bot: Bot, chat_id: str, text: str, video_path: str = None):
+    async def _send_message_with_retries(
+        self, bot: Bot, chat_id: str, text: str, video_path: Path = None, video_url: Path = None
+    ):
         """
         Отправляет сообщение в Telegram с заданным числом повторных попыток.
 
@@ -167,23 +171,36 @@ class TelegramBotService:
         """
         for attempt in range(1, self._max_retries + 1):
             try:
-                if video_path and os.path.isfile(video_path):
+                if video_path is not None and video_path.exists():
+                    logger.debug("(TGBot) Sending video...")
                     await bot.send_video(
                         chat_id=chat_id,
                         video=open(video_path, "rb"),
                         caption=text,
-                        parse_mode="Markdown",
+                        parse_mode="MarkdownV2",
                         pool_timeout=180,
                         read_timeout=180,
                         write_timeout=180,
                         connect_timeout=180,
                     )
                     logger.info("(TGBot) Видео успешно отправлено")
+                elif text and video_url:
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text=text,
+                        parse_mode="MarkdownV2",
+                        link_preview_options=LinkPreviewOptions(
+                            url=video_url,
+                            is_disabled=False,
+                            prefer_large_media=True,
+                        ),
+                    )
+                    logger.info("(TGBot) Сообщение с превью успешно отправлено")
                 elif text:
                     await bot.send_message(
                         chat_id=chat_id,
                         text=text,
-                        parse_mode="Markdown",
+                        parse_mode="MarkdownV2",
                     )
                     # self._repository.update_tg_post_date(video_id)
                     logger.info("(TGBot) Сообщение успешно отправлено")
@@ -203,19 +220,67 @@ class TelegramBotService:
 
         logger.error("Не удалось отправить сообщение после всех попыток")
 
+    @staticmethod
+    def render_template(template_path: Path, **kwargs) -> str:
+        """Загружает и рендерит шаблон с подстановкой значений."""
+        if not template_path.exists():
+            raise FileNotFoundError(f"Шаблон не найден: {template_path}")
+
+        try:
+            with open(template_path, "r", encoding="utf-8") as f:
+                template_content = f.read()
+
+            # Экранируем переменные
+            safe_kwargs = {
+                key: escape_markdown(value, version=2) if key not in {"video_url", "channel_url"} else value
+                for key, value in kwargs.items()
+            }
+
+            template = Template(template_content)
+            return template.render(**safe_kwargs)
+        except TemplateSyntaxError as e:
+            raise ValueError(f"Ошибка в шаблоне {template_path}: {e}")
+
     def _format_newvideo_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
-        return (
-            f"🎥 **[{escape_markdown(video_title)}]({video_url})**\n"
-            + escape_markdown(f"#{channel_name.replace(' ', '_')} #Videos\n")
-            + f"На канале «[{escape_markdown(channel_name)}]({channel_url})» вышло новое видео:"
+        cleaned_title, additional_hashtags = extract_hashtags(video_title)
+        main_hashtag = get_channel_hashtag(channel_name)
+        if additional_hashtags.strip():
+            all_hashtags = f"#Videos #{main_hashtag} {additional_hashtags}"
+        else:
+            all_hashtags = f"#Videos #{main_hashtag} #YouTube"
+        if settings.tg_new_video_template.exists():
+            new_video_template_path = settings.tg_new_video_template
+        else:
+            logger.warning("New video template not found. Using default template!")
+            new_video_template_path = settings.tg_new_video_template_default
+        return self.render_template(
+            new_video_template_path,
+            video_title=cleaned_title,
+            video_url=video_url,
+            channel_name=channel_name,
+            channel_url=channel_url,
+            all_hashtags=all_hashtags,
         )
 
     def _format_shorts_message(self, channel_name: str, channel_url: str, video_title: str, video_url: str):
         """Форматирование сообщения в Markdown формате."""
-        return (
-            f"🎥 [{escape_markdown(video_title)}]({video_url})\n"
-            f"🎬 Новое видео!"
-            f" На канале «[{escape_markdown(channel_name)}]({channel_url})»\n"
-            + escape_markdown(f"#Shorts #YouTube #{channel_name.replace(' ', '_')}")
+        cleaned_title, additional_hashtags = extract_hashtags(video_title)
+        main_hashtag = get_channel_hashtag(channel_name)
+        if additional_hashtags.strip():
+            all_hashtags = f"#Shorts #{main_hashtag} {additional_hashtags}"
+        else:
+            all_hashtags = f"#Shorts #{main_hashtag}"
+        if settings.tg_shorts_template.exists():
+            shorts_template_path = settings.tg_shorts_template
+        else:
+            logger.warning("Shorts template not found. Using default template!")
+            shorts_template_path = settings.tg_shorts_template_default
+        return self.render_template(
+            shorts_template_path,
+            video_title=cleaned_title,
+            video_url=video_url,
+            channel_name=channel_name,
+            channel_url=channel_url,
+            all_hashtags=all_hashtags,
         )
